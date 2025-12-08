@@ -1,0 +1,104 @@
+---
+import Layout from '../layouts/Layout.astro'
+---
+
+<Layout title="Prettify AI - Make Your AI Resume Look Professional">
+  <div class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="border-b bg-white">
+      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="text-xl font-bold text-primary">prettify.ai</div>
+        <div class="flex items-center gap-3">
+          <a href="/coach" class="text-sm text-gray-600 hover:text-primary">AI Coach</a>
+          <a href="/editor" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+            Open Editor
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <main class="flex-1 bg-gradient-to-b from-white to-gray-50">
+      <div class="container mx-auto px-4 py-16 text-center max-w-4xl">
+
+        <!-- Main headline -->
+        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+          AI Wrote Your Resume <span class="text-gray-400">(in markdown)</span><br/>
+          <span class="text-primary">Now Make It Look Professional.</span>
+        </h1>
+        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          Paste. Style. Export to PDF or Word. Apply in 2 minutes.
+        </p>
+
+        <!-- Two paths -->
+        <div class="grid md:grid-cols-2 gap-6 my-12 max-w-3xl mx-auto">
+
+          <!-- Path 1: Already have resume -->
+          <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-primary transition-colors text-left">
+            <div class="text-sm font-medium text-primary mb-2">I HAVE A RESUME</div>
+            <h3 class="text-xl font-bold mb-3">Format & Export</h3>
+            <p class="text-gray-600 text-sm mb-6">Paste markdown from ChatGPT or Claude. Choose a theme. Download as PDF or DOCX.</p>
+            <a href="/editor" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6">
+              Open Editor
+            </a>
+          </div>
+
+          <!-- Path 2: Need help -->
+          <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-purple-500 transition-colors text-left">
+            <div class="text-sm font-medium text-purple-600 mb-2">I NEED HELP</div>
+            <h3 class="text-xl font-bold mb-3">AI Resume Coach</h3>
+            <p class="text-gray-600 text-sm mb-6">Chat with AI to build your resume. Import from LinkedIn. Get help with gaps and career changes.</p>
+            <a href="/coach" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 h-11 px-6">
+              Start Coaching
+            </a>
+          </div>
+        </div>
+
+        <p class="text-sm text-gray-500">100% free. No signup. No payment. Ever.</p>
+
+        <!-- How it works -->
+        <div class="mt-20 pt-12 border-t">
+          <h2 class="text-2xl font-bold mb-8">How It Works</h2>
+          <div class="grid md:grid-cols-3 gap-8 text-left max-w-3xl mx-auto">
+            <div>
+              <div class="text-4xl font-bold text-primary/20 mb-2">1</div>
+              <h3 class="font-semibold mb-2">Paste Your Markdown</h3>
+              <p class="text-gray-600 text-sm">Copy the resume ChatGPT or Claude generated. Paste it in. We convert markdown to styled HTML automatically.</p>
+            </div>
+            <div>
+              <div class="text-4xl font-bold text-primary/20 mb-2">2</div>
+              <h3 class="font-semibold mb-2">Choose a Style</h3>
+              <p class="text-gray-600 text-sm">Professional, Modern, or ATS-friendly. Pick the look that fits your industry. Preview instantly.</p>
+            </div>
+            <div>
+              <div class="text-4xl font-bold text-primary/20 mb-2">3</div>
+              <h3 class="font-semibold mb-2">Export & Apply</h3>
+              <p class="text-gray-600 text-sm">Download as PDF for email or DOCX for ATS systems. Attach to your application. Done.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bookmarklet -->
+        <div class="mt-16 pt-8 border-t">
+          <h2 class="text-xl font-semibold mb-4">Power User Tip</h2>
+          <p class="text-gray-600 mb-4">Drag this bookmarklet to your browser. Select text in ChatGPT, click it, and it opens here formatted.</p>
+          <a
+            href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select your resume text first!');return;}window.open('https://prettifyai.pages.dev/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
+            onclick="event.preventDefault();alert('Drag this to your bookmark bar!');"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+            Prettify It
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t bg-white py-6">
+      <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+        <p>Built for job seekers who use AI. <a href="https://github.com/deankeesey" class="underline hover:text-primary">Open source</a>.</p>
+      </div>
+    </footer>
+  </div>
+</Layout>
