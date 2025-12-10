@@ -124,6 +124,47 @@ Avoid: Friday night, Saturday (lower engagement)
 
 ---
 
+## Why Not Just Use [X]? - Objection Handling
+
+### The Real Gap
+
+Even savvy users who know Notion, GDocs, and markdown still need this tool. Here's why:
+
+| Tool | PDF Export | DOCX Export | Auto-Styling |
+|------|------------|-------------|--------------|
+| **Notion** | Paid plan only (or watermarks) | ❌ Not available | ❌ No themes |
+| **Google Docs** | ✅ Easy | ✅ Easy | ❌ Paste = plain text |
+| **Obsidian** | Via plugin, clunky | ❌ Not native | ❌ Limited |
+| **prettify-ai** | ✅ One click | ✅ One click | ✅ Professional themes |
+
+### The Core Value Proposition
+
+**"Notion can't export DOCX. GDocs can't style your markdown. This does both."**
+
+Or more specifically:
+- Notion users → finally get DOCX without workarounds
+- GDocs users → get styled output without manual formatting
+- Everyone → professional themes without becoming a Word/Notion power user
+
+### Detailed Objection Responses
+
+**"Why not paste into Notion?"**
+> "Notion's great for organizing, but try exporting a resume as DOCX - you can't. And their PDF export requires a paid plan for decent quality. This gives you both formats with professional styling in 30 seconds."
+
+**"Why not use Google Docs?"**
+> "GDocs can export to anything, but when you paste markdown it's just plain text with asterisks. You'd spend 15 minutes formatting. This renders and styles it automatically."
+
+**"Why not Pandoc?"**
+> "Pandoc is amazing for automation and CLI workflows. This is for when you want to paste, pick a theme, and click export. Different tools for different moments."
+
+**"Why not just format it in Word?"**
+> "You absolutely can. This saves the 10-20 minutes of manual formatting when you just want 'professional resume PDF' and you're starting from markdown."
+
+**"I can do this with [obscure tool]"**
+> "Nice! If you have a workflow that works, use it. This is for people who don't want to set anything up - paste, theme, export, done."
+
+---
+
 ## Handling Common Responses
 
 **"Why not just use [Pandoc/existing tool]?"**
