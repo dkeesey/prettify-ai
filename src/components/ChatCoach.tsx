@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -9,10 +9,11 @@ import {
   Bot,
   FileDown,
   ArrowRight,
+  RotateCcw,
 } from 'lucide-react'
-
-// Note: This key is intentionally client-side for this free tool
-const GROQ_API_KEY = import.meta.env.PUBLIC_GROQ_API_KEY || ''
+import { extractResumeFromResponse } from '@/lib/markdown'
+import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/storage'
+import { features } from '@/lib/features'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -73,14 +74,43 @@ const WELCOME_MESSAGE = `Hey! I'm your resume coach. I help people tell their ca
 What kind of role are you targeting, and what's your current situation? (Job searching, career change, getting back into work, etc.)`
 
 export default function ChatCoach() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: WELCOME_MESSAGE }
-  ])
+  // Initialize from localStorage or defaults
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = getStoredValue<Message[] | null>(STORAGE_KEYS.CHAT_MESSAGES, null)
+    return saved && saved.length > 0 ? saved : [{ role: 'assistant', content: WELCOME_MESSAGE }]
+  })
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [generatedResume, setGeneratedResume] = useState<string | null>(null)
+  const [generatedResume, setGeneratedResume] = useState<string | null>(() =>
+    getStoredValue<string | null>(STORAGE_KEYS.GENERATED_RESUME, null)
+  )
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 1 || messages[0]?.content !== WELCOME_MESSAGE) {
+      setStoredValue(STORAGE_KEYS.CHAT_MESSAGES, messages)
+    }
+  }, [messages])
+
+  // Save generated resume to localStorage
+  useEffect(() => {
+    if (generatedResume) {
+      setStoredValue(STORAGE_KEYS.GENERATED_RESUME, generatedResume)
+    }
+  }, [generatedResume])
+
+  // Start new conversation - clears history
+  const startNewConversation = useCallback(() => {
+    setMessages([{ role: 'assistant', content: WELCOME_MESSAGE }])
+    setGeneratedResume(null)
+    setInput('')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.CHAT_MESSAGES)
+      localStorage.removeItem(STORAGE_KEYS.GENERATED_RESUME)
+    }
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -89,12 +119,6 @@ export default function ChatCoach() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
-  // Extract markdown resume from response if present
-  const extractResume = (content: string): string | null => {
-    const match = content.match(/```markdown\n([\s\S]*?)```/)
-    return match ? match[1].trim() : null
-  }
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return
@@ -112,14 +136,12 @@ export default function ChatCoach() {
         ...newMessages.map(m => ({ role: m.role, content: m.content }))
       ]
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
           messages: apiMessages,
           max_tokens: 3000,
           temperature: 0.7,
@@ -165,7 +187,7 @@ export default function ChatCoach() {
       }
 
       // Check if response contains a resume
-      const resume = extractResume(assistantContent)
+      const resume = extractResumeFromResponse(assistantContent)
       if (resume) {
         setGeneratedResume(resume)
       }
@@ -209,10 +231,23 @@ export default function ChatCoach() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <a href="/editor">Paste MD</a>
-            </Button>
-            {generatedResume && (
+            {messages.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={startNewConversation}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-4 w-4 mr-1" />
+                Start New
+              </Button>
+            )}
+            {features.editor && (
+              <Button variant="outline" size="sm" asChild>
+                <a href="/editor">Paste MD</a>
+              </Button>
+            )}
+            {features.editor && generatedResume && (
               <Button onClick={openInEditor} className="gap-2">
                 Open in Editor
                 <ArrowRight className="h-4 w-4" />
@@ -280,10 +315,12 @@ export default function ChatCoach() {
               <FileDown className="h-5 w-5" />
               <span className="font-medium">Resume generated!</span>
             </div>
-            <Button onClick={openInEditor} variant="outline" size="sm" className="gap-2">
-              Edit & Export
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            {features.editor && (
+              <Button onClick={openInEditor} variant="outline" size="sm" className="gap-2">
+                Edit & Export
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       )}

@@ -2,9 +2,13 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-import { useRef, useState, useEffect } from 'react'
+import DOMPurify from 'dompurify'
+import { useRef, useState, useEffect, useCallback } from 'react'
+import { markdownToHtml } from '@/lib/markdown'
+import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/storage'
+import { features } from '@/lib/features'
 import { useReactToPrint } from 'react-to-print'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, convertInchesToTwip } from 'docx'
 import { saveAs } from 'file-saver'
 import { Button } from '@/components/ui/button'
 import {
@@ -42,11 +46,12 @@ import {
   Linkedin,
   Wand2,
   MessageCircle,
+  Trash2,
+  Save,
+  Bookmark,
 } from 'lucide-react'
 
-// Groq API for free resume generation
-// Note: This key is intentionally client-side for this free tool
-const GROQ_API_KEY = import.meta.env.PUBLIC_GROQ_API_KEY || ''
+// API calls now go through server-side /api/chat endpoint
 
 // Resume writing styles
 const resumeStyles = {
@@ -127,19 +132,21 @@ Rules:
 - If information is missing, omit that section
 - Output ONLY the markdown, no explanations`
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 3000,
       temperature: 0.5,
     }),
   })
+
+  if (!response.ok) {
+    throw new Error('Failed to parse LinkedIn profile')
+  }
 
   const data = await response.json()
   return data.choices[0]?.message?.content || ''
@@ -205,84 +212,104 @@ skill1, skill2, skill3
 
 Output ONLY the markdown, no explanations.`
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${GROQ_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2000,
       temperature: 0.7,
     }),
   })
 
+  if (!response.ok) {
+    throw new Error('Failed to generate resume')
+  }
+
   const data = await response.json()
   return data.choices[0]?.message?.content || ''
 }
 
 const themes = {
+  // Sans-serif themes (Arial/Helvetica family)
   professional: {
     name: 'Professional',
-    fontFamily: 'Georgia, serif',
-    headingFont: 'Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    headingFont: 'Arial, Helvetica, sans-serif',
+    exportFont: 'Arial, Helvetica, sans-serif', // Universal font for PDF/DOCX
+    docxFont: 'Arial',
     fontSize: '11pt',
     lineHeight: '1.5',
     color: '#1a1a1a',
     headingColor: '#2563eb',
+    decorative: true, // Show underlines on H2
   },
   modern: {
     name: 'Modern',
-    fontFamily: 'Inter, system-ui, sans-serif',
-    headingFont: 'Inter, system-ui, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    headingFont: 'Arial, Helvetica, sans-serif',
+    exportFont: 'Arial, Helvetica, sans-serif',
+    docxFont: 'Arial',
     fontSize: '10pt',
     lineHeight: '1.4',
     color: '#374151',
     headingColor: '#111827',
+    decorative: true,
   },
   minimal: {
     name: 'ATS Minimal',
-    fontFamily: 'Arial, sans-serif',
-    headingFont: 'Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    headingFont: 'Arial, Helvetica, sans-serif',
+    exportFont: 'Arial, Helvetica, sans-serif',
+    docxFont: 'Arial',
     fontSize: '11pt',
     lineHeight: '1.5',
     color: '#000000',
     headingColor: '#000000',
+    decorative: false, // No decorative elements - pure ATS
+  },
+  // Serif themes (Times New Roman family)
+  classic: {
+    name: 'Classic',
+    fontFamily: '"Times New Roman", Times, serif',
+    headingFont: '"Times New Roman", Times, serif',
+    exportFont: '"Times New Roman", Times, serif',
+    docxFont: 'Times New Roman',
+    fontSize: '12pt',
+    lineHeight: '1.5',
+    color: '#1a1a1a',
+    headingColor: '#2563eb',
+    decorative: true,
+  },
+  traditional: {
+    name: 'Traditional',
+    fontFamily: '"Times New Roman", Times, serif',
+    headingFont: '"Times New Roman", Times, serif',
+    exportFont: '"Times New Roman", Times, serif',
+    docxFont: 'Times New Roman',
+    fontSize: '12pt',
+    lineHeight: '1.5',
+    color: '#000000',
+    headingColor: '#000000',
+    decorative: false, // Plain traditional look
+  },
+  elegant: {
+    name: 'Elegant',
+    fontFamily: 'Georgia, "Times New Roman", serif',
+    headingFont: 'Georgia, "Times New Roman", serif',
+    exportFont: '"Times New Roman", Times, serif', // Use Times for export compatibility
+    docxFont: 'Times New Roman',
+    fontSize: '11pt',
+    lineHeight: '1.6',
+    color: '#2d2d2d',
+    headingColor: '#1e40af',
+    decorative: true,
   },
 }
 
 type ThemeKey = keyof typeof themes
-
-// Simple markdown to HTML converter - defined at module level so it's available everywhere
-const markdownToHtml = (md: string): string => {
-  return md
-    // Headers (order matters - do ### before ## before #)
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    // Links [text](url)
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
-    // Bold
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic (but not inside URLs)
-    .replace(/(?<!\w)\*([^*]+?)\*(?!\w)/g, '<em>$1</em>')
-    // Horizontal rules
-    .replace(/^---$/gm, '<hr>')
-    // Lists
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    // Wrap consecutive list items
-    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
-    // Paragraphs (lines that aren't already wrapped)
-    .split('\n\n')
-    .map(block => {
-      if (block.startsWith('<')) return block
-      if (block.trim() === '') return ''
-      return `<p>${block.replace(/\n/g, '<br>')}</p>`
-    })
-    .join('\n')
-}
 
 // Sample resume content for demo
 const sampleResume = `# Jane Smith
@@ -320,8 +347,13 @@ JavaScript, TypeScript, React, Node.js, PostgreSQL, AWS, Docker, Git
 `
 
 export default function Editor() {
-  const [theme, setTheme] = useState<ThemeKey>('professional')
-  const [resumeStyle, setResumeStyle] = useState<ResumeStyleKey>('hybrid')
+  // Initialize state from localStorage where applicable
+  const [theme, setTheme] = useState<ThemeKey>(() =>
+    getStoredValue(STORAGE_KEYS.THEME, 'professional') as ThemeKey
+  )
+  const [resumeStyle, setResumeStyle] = useState<ResumeStyleKey>(() =>
+    getStoredValue(STORAGE_KEYS.RESUME_STYLE, 'hybrid') as ResumeStyleKey
+  )
   const [wordCount, setWordCount] = useState(0)
   const [generateOpen, setGenerateOpen] = useState(false)
   const [linkedInOpen, setLinkedInOpen] = useState(false)
@@ -345,9 +377,38 @@ export default function Editor() {
     skills: '',
     education: '',
   })
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
+  const [bookmarkletOpen, setBookmarkletOpen] = useState(false)
+  const [docxConfirmOpen, setDocxConfirmOpen] = useState(false)
+  const [pageCount, setPageCount] = useState(1)
   const printRef = useRef<HTMLDivElement>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const currentTheme = themes[theme]
+
+  // Debounced save function for editor content
+  const saveEditorContent = useCallback((html: string) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    setSaveStatus('saving')
+    saveTimeoutRef.current = setTimeout(() => {
+      setStoredValue(STORAGE_KEYS.EDITOR_CONTENT, html)
+      setSaveStatus('saved')
+      // Reset to idle after showing saved status
+      setTimeout(() => setSaveStatus('idle'), 1500)
+    }, 500) // 500ms debounce
+  }, [])
+
+  // Save theme preference when changed
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.THEME, theme)
+  }, [theme])
+
+  // Save resume style preference when changed
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.RESUME_STYLE, resumeStyle)
+  }, [resumeStyle])
 
   const editor = useEditor({
     extensions: [
@@ -366,6 +427,11 @@ export default function Editor() {
       const text = editor.getText()
       const words = text.trim().split(/\s+/).filter(Boolean).length
       setWordCount(words)
+      // Auto-save content (debounced)
+      const html = editor.getHTML()
+      if (html !== '<p></p>') {
+        saveEditorContent(html)
+      }
     },
     editorProps: {
       attributes: {
@@ -397,20 +463,42 @@ export default function Editor() {
     }
   }, [editor])
 
-  // Load content from URL parameter on mount
+  // Load content from URL parameter or localStorage on mount
   useEffect(() => {
     if (!editor) return
     const params = new URLSearchParams(window.location.search)
-    const content = params.get('content')
-    if (content) {
+    const urlContent = params.get('content')
+
+    if (urlContent) {
+      // URL parameter takes priority - sanitize for consistency
+      const sanitizeOptions = {
+        ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'hr', 'br'],
+        ALLOWED_ATTR: ['href'],
+        ALLOW_DATA_ATTR: false,
+      }
       try {
-        const decoded = atob(content)
+        const decoded = atob(urlContent)
         const html = markdownToHtml(decoded)
-        editor.commands.setContent(html)
+        const sanitized = DOMPurify.sanitize(html, sanitizeOptions)
+        editor.commands.setContent(sanitized)
       } catch (e) {
         // If not base64, try as plain text
-        const html = markdownToHtml(content)
-        editor.commands.setContent(html)
+        const html = markdownToHtml(urlContent)
+        const sanitized = DOMPurify.sanitize(html, sanitizeOptions)
+        editor.commands.setContent(sanitized)
+      }
+    } else {
+      // No URL param - try loading from localStorage
+      const savedContent = getStoredValue<string | null>(STORAGE_KEYS.EDITOR_CONTENT, null)
+      if (savedContent) {
+        // Sanitize localStorage content (could have been tampered with)
+        const sanitized = DOMPurify.sanitize(savedContent, {
+          ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'hr', 'br'],
+          ALLOWED_ATTR: ['href'],
+          ALLOW_DATA_ATTR: false,
+        })
+        editor.commands.setContent(sanitized)
+        setSaveStatus('saved')
       }
     }
   }, [editor])
@@ -428,9 +516,57 @@ export default function Editor() {
     return () => clearInterval(interval)
   }, [generating, importing])
 
+  // Calculate page count based on line count (typography-based)
+  // US Letter with 1" margins = 6.5" x 9" content area
+  // At 11pt font with 1.5 line height: ~40-42 lines per page
+  const LINES_PER_PAGE = 42
+
+  useEffect(() => {
+    if (!editor) return
+
+    const calculatePages = () => {
+      // Get text content and count lines
+      const text = editor.getText()
+      const html = editor.getHTML()
+
+      // Count actual line breaks in content
+      // Each paragraph, heading, and list item counts as at least one line
+      const paragraphs = (html.match(/<p>/g) || []).length
+      const headings = (html.match(/<h[1-3]/g) || []).length
+      const listItems = (html.match(/<li>/g) || []).length
+
+      // H1 takes ~2 lines, H2 takes ~1.5 lines due to margins
+      const headingLines = headings * 1.5
+
+      // Estimate wrapped lines based on character count
+      // ~65 chars per line at 11pt on 6.5" width (1" margins)
+      const CHARS_PER_LINE = 65
+      const textLines = Math.ceil(text.length / CHARS_PER_LINE)
+
+      // Total estimated lines (paragraphs add spacing)
+      const totalLines = Math.max(
+        textLines + headingLines + (paragraphs * 0.5),
+        paragraphs + headings + listItems
+      )
+
+      const pages = Math.max(1, Math.ceil(totalLines / LINES_PER_PAGE))
+      setPageCount(pages)
+    }
+
+    // Calculate on content changes
+    calculatePages()
+
+    // Listen for editor updates
+    editor.on('update', calculatePages)
+
+    return () => {
+      editor.off('update', calculatePages)
+    }
+  }, [editor])
+
   const loadSample = () => {
-    const html = markdownToHtml(sampleResume)
-    editor?.commands.setContent(html)
+    // Load raw markdown so user can see before/after with Convert MD
+    editor?.commands.setContent(`<pre>${sampleResume}</pre>`)
   }
 
   const convertMarkdown = () => {
@@ -444,6 +580,11 @@ export default function Editor() {
 
   const clearContent = () => {
     editor?.commands.clearContent()
+    // Clear localStorage as well
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.EDITOR_CONTENT)
+    }
+    setSaveStatus('idle')
   }
 
   const handleGenerate = async () => {
@@ -512,14 +653,51 @@ export default function Editor() {
     const json = editor.getJSON()
     const children: Paragraph[] = []
 
+    // Typography constants derived from theme
+    // DOCX uses half-points for font size, twips for spacing (20 twips = 1pt)
+    const currentTheme = themes[theme]
+    const FONT_NAME = currentTheme.docxFont
+    // Parse theme fontSize (e.g., "11pt" -> 22 half-points)
+    const baseFontPt = parseInt(currentTheme.fontSize) || 11
+    const FONT_SIZE_BODY = baseFontPt * 2 // half-points
+    const FONT_SIZE_H1 = baseFontPt * 2 * 2.18 // ~24pt for 11pt base (matching CSS 24pt)
+    const FONT_SIZE_H2 = baseFontPt * 2 * 1.27 // ~14pt for 11pt base (matching CSS 14pt)
+    const FONT_SIZE_H3 = baseFontPt * 2 * 1.09 // ~12pt for 11pt base (matching CSS 12pt)
+    // Parse lineHeight (e.g., "1.5" -> 360 twips)
+    const lineHeightRatio = parseFloat(currentTheme.lineHeight) || 1.5
+    const LINE_SPACING = Math.round(240 * lineHeightRatio) // 240 = single spacing
+    const CHAR_SPACING = 4 // slight extra letter spacing (in twips)
+    // Spacing to match on-screen breathing room
+    const SPACE_AFTER_H1 = 200 // 10pt
+    const SPACE_BEFORE_H2 = 480 // 24pt - gap before section headings
+    const SPACE_AFTER_H2 = 120 // 6pt - tighter after section heading
+    const SPACE_BEFORE_H3 = 320 // 16pt - space before job titles
+    const SPACE_AFTER_H3 = 60 // 3pt - tight after job title
+    const SPACE_AFTER_PARA = 160 // 8pt - space after paragraphs
+    const SPACE_AFTER_BULLET = 80 // 4pt - tighter for bullet lists
+
     const processNode = (node: any) => {
       if (node.type === 'heading') {
         const level = node.attrs?.level || 1
-        const text = node.content?.map((c: any) => c.text || '').join('') || ''
+        const runs: TextRun[] = []
+        node.content?.forEach((c: any) => {
+          runs.push(new TextRun({
+            text: c.text || '',
+            font: FONT_NAME,
+            size: level === 1 ? FONT_SIZE_H1 : level === 2 ? FONT_SIZE_H2 : FONT_SIZE_H3,
+            bold: false, // Match TipTap - headings use size/color, not bold
+            characterSpacing: CHAR_SPACING,
+          }))
+        })
         children.push(
           new Paragraph({
-            text,
+            children: runs,
             heading: level === 1 ? HeadingLevel.HEADING_1 : level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3,
+            spacing: {
+              before: level === 1 ? 0 : level === 2 ? SPACE_BEFORE_H2 : SPACE_BEFORE_H3,
+              after: level === 1 ? SPACE_AFTER_H1 : level === 2 ? SPACE_AFTER_H2 : SPACE_AFTER_H3,
+              line: LINE_SPACING,
+            },
           })
         )
       } else if (node.type === 'paragraph') {
@@ -527,13 +705,45 @@ export default function Editor() {
         node.content?.forEach((c: any) => {
           const isBold = c.marks?.some((m: any) => m.type === 'bold')
           const isItalic = c.marks?.some((m: any) => m.type === 'italic')
-          runs.push(new TextRun({ text: c.text || '', bold: isBold, italics: isItalic }))
+          runs.push(new TextRun({
+            text: c.text || '',
+            font: FONT_NAME,
+            size: FONT_SIZE_BODY,
+            bold: isBold,
+            italics: isItalic,
+            characterSpacing: CHAR_SPACING,
+          }))
         })
-        children.push(new Paragraph({ children: runs }))
+        children.push(new Paragraph({
+          children: runs,
+          spacing: {
+            after: SPACE_AFTER_PARA,
+            line: LINE_SPACING,
+          },
+        }))
       } else if (node.type === 'bulletList' || node.type === 'orderedList') {
         node.content?.forEach((li: any) => {
-          const text = li.content?.[0]?.content?.map((c: any) => c.text || '').join('') || ''
-          children.push(new Paragraph({ text: `• ${text}` }))
+          const runs: TextRun[] = []
+          li.content?.[0]?.content?.forEach((c: any) => {
+            const isBold = c.marks?.some((m: any) => m.type === 'bold')
+            const isItalic = c.marks?.some((m: any) => m.type === 'italic')
+            runs.push(new TextRun({
+              text: c.text || '',
+              font: FONT_NAME,
+              size: FONT_SIZE_BODY,
+              bold: isBold,
+              italics: isItalic,
+              characterSpacing: CHAR_SPACING,
+            }))
+          })
+          children.push(new Paragraph({
+            children: runs,
+            bullet: { level: 0 },
+            spacing: {
+              after: SPACE_AFTER_BULLET,
+              line: LINE_SPACING,
+            },
+          }))
         })
       }
     }
@@ -542,7 +752,16 @@ export default function Editor() {
 
     const doc = new Document({
       sections: [{
-        properties: {},
+        properties: {
+          page: {
+            margin: {
+              top: convertInchesToTwip(1),
+              right: convertInchesToTwip(1),
+              bottom: convertInchesToTwip(1),
+              left: convertInchesToTwip(1),
+            },
+          },
+        },
         children,
       }],
     })
@@ -558,21 +777,68 @@ export default function Editor() {
       {/* Header/Nav */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-primary">prettify.ai</a>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <a href="/coach" className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                AI Coach
-              </a>
-            </Button>
-            <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
+          <div className="flex items-center gap-3">
+            <Dialog open={bookmarkletOpen} onOpenChange={setBookmarkletOpen}>
               <DialogTrigger asChild>
-                <Button variant="default" size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-                  <Sparkles className="h-4 w-4 mr-1" />
-                  Generate
+                <Button variant="outline" size="sm" title="Install browser bookmarklet to send text here from any page">
+                  <Bookmark className="h-4 w-4 mr-1" />
+                  Bookmarklet
                 </Button>
               </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Install Browser Bookmarklet</DialogTitle>
+                  <DialogDescription>
+                    A one-click tool to send selected text from any webpage to this editor.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-900 mb-2">Installation:</p>
+                    <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                      <li>Show your browser's bookmark bar (Ctrl+Shift+B)</li>
+                      <li>Drag the button below to your bookmark bar</li>
+                      <li>Done! Click it anytime with text selected</li>
+                    </ol>
+                  </div>
+                  <div className="flex justify-center">
+                    <a
+                      href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
+                      onClick={(e) => { e.preventDefault(); alert('Drag this button to your bookmark bar!'); }}
+                    >
+                      <Bookmark className="h-4 w-4" />
+                      Prettify It
+                    </a>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm font-medium text-gray-700 mb-1">Usage:</p>
+                    <p className="text-xs text-gray-600">
+                      Select any text (ChatGPT output, docs, markdown), click the bookmarklet, and it opens here formatted and ready to export.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            <a href="/" className="text-xl font-bold text-primary">prettify-ai.com</a>
+          </div>
+          <div className="flex items-center gap-2">
+            {features.coach && (
+              <Button variant="outline" size="sm" asChild>
+                <a href="/coach" className="flex items-center gap-1">
+                  <MessageCircle className="h-4 w-4" />
+                  AI Coach
+                </a>
+              </Button>
+            )}
+            {features.aiGenerate && (
+              <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    Generate
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Generate Resume with AI</DialogTitle>
@@ -683,13 +949,15 @@ export default function Editor() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Dialog open={linkedInOpen} onOpenChange={setLinkedInOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="border-[#0A66C2] text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white">
-                  <Linkedin className="h-4 w-4 mr-1" />
-                  LinkedIn
-                </Button>
-              </DialogTrigger>
+            )}
+            {features.linkedIn && (
+              <Dialog open={linkedInOpen} onOpenChange={setLinkedInOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="border-[#0A66C2] text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white">
+                    <Linkedin className="h-4 w-4 mr-1" />
+                    LinkedIn
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
                 <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Import from LinkedIn</DialogTitle>
@@ -779,22 +1047,65 @@ export default function Editor() {
                 </div>
               </DialogContent>
             </Dialog>
+            )}
             <Button variant="outline" size="sm" onClick={loadSample}>
-              Sample
+              Paste Sample
             </Button>
             <Button variant="outline" size="sm" onClick={convertMarkdown}>
               Convert MD
             </Button>
-            <Button variant="outline" size="sm" onClick={clearContent}>
-              Clear
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handlePrint()}>
-              <FileDown className="h-4 w-4 mr-1" />
-              PDF
-            </Button>
-            <Button variant="default" size="sm" onClick={exportDocx}>
-              <FileText className="h-4 w-4 mr-1" />
-              DOCX
+            {features.export && (
+              <>
+                <Dialog open={docxConfirmOpen} onOpenChange={setDocxConfirmOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <FileText className="h-4 w-4 mr-1" />
+                      DOCX
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Download ATS-Friendly DOCX</DialogTitle>
+                      <DialogDescription>
+                        Optimized for Applicant Tracking Systems
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 text-sm">
+                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                        <p className="text-amber-900">
+                          <strong>Note:</strong> The DOCX will look simpler than what you see on screen. This is intentional—ATS software can't read fancy formatting.
+                        </p>
+                      </div>
+                      <p className="font-medium">DOCX format includes:</p>
+                      <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                        <li>Plain Arial font, 11pt</li>
+                        <li>Simple heading hierarchy</li>
+                        <li>Standard bullet points</li>
+                        <li>No colors or decorative lines</li>
+                      </ul>
+                      <p className="text-muted-foreground text-xs">
+                        Want the styled version? Use <strong>PDF</strong> for emailing directly to humans.
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="outline" onClick={() => setDocxConfirmOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={() => { exportDocx(); setDocxConfirmOpen(false); }}>
+                        <FileText className="h-4 w-4 mr-1" />
+                        Download DOCX
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button variant="default" size="sm" onClick={() => handlePrint()}>
+                  <FileDown className="h-4 w-4 mr-1" />
+                  PDF
+                </Button>
+              </>
+            )}
+            <Button variant="ghost" size="sm" onClick={clearContent}>
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -896,100 +1207,154 @@ export default function Editor() {
             </Select>
           </div>
 
-          {/* Resume style selector */}
-          <div className="flex items-center gap-2">
-            <Label className="text-sm text-muted-foreground whitespace-nowrap">Writing Style</Label>
-            <Select value={resumeStyle} onValueChange={(v) => setResumeStyle(v as ResumeStyleKey)}>
-              <SelectTrigger className="w-[150px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(resumeStyles).map(([key, s]) => (
-                  <SelectItem key={key} value={key}>
-                    <span>{s.name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Resume style selector - only show when AI features enabled */}
+          {features.aiGenerate && (
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground whitespace-nowrap">Writing Style</Label>
+              <Select value={resumeStyle} onValueChange={(v) => setResumeStyle(v as ResumeStyleKey)}>
+                <SelectTrigger className="w-[150px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(resumeStyles).map(([key, s]) => (
+                    <SelectItem key={key} value={key}>
+                      <span>{s.name}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          {/* Word count */}
-          <div className="ml-auto text-xs text-muted-foreground">
-            {wordCount} words
+          {/* Word count, page count, and save status */}
+          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+            {saveStatus === 'saving' && (
+              <span className="flex items-center gap-1 text-yellow-600">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Saving...
+              </span>
+            )}
+            {saveStatus === 'saved' && (
+              <span className="flex items-center gap-1 text-green-600">
+                <Save className="h-3 w-3" />
+                Saved
+              </span>
+            )}
+            <span>{wordCount} words</span>
+            <span className={pageCount > 2 ? 'text-amber-600 font-medium' : ''}>
+              {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+              {pageCount > 2 && ' ⚠️'}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Editor content */}
+      {/* ATS Info Banner */}
+      <div className="bg-blue-50 border-b border-blue-100 px-4 py-2">
+        <p className="text-xs text-blue-800 text-center max-w-3xl mx-auto">
+          <strong>Pro tip:</strong> Submit DOCX to job portals (ATS-friendly, no fancy formatting).
+          Bring the polished PDF to interviews.
+        </p>
+      </div>
+
+      {/* Editor content - Paginated Canvas View */}
       <div className="flex-1 overflow-auto bg-gray-200 py-8">
-        <div
-          className="mx-auto bg-white shadow-2xl"
-          style={{
-            width: '8.5in',
-            minHeight: '11in',
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05)',
-          }}
-        >
+        <style>{`
+          .resume-content {
+            transition: all 0.3s ease-in-out;
+          }
+          .resume-content h1, .resume-content h2, .resume-content h3 {
+            font-family: var(--heading-font);
+            color: var(--heading-color);
+            transition: all 0.3s ease-in-out;
+          }
+          .resume-content h1 {
+            font-size: 24pt;
+            margin-bottom: 0.5rem;
+          }
+          .resume-content h2 {
+            font-size: 14pt;
+            border-bottom: var(--h2-border);
+            padding-bottom: 0.25rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+          }
+          .resume-content h3 {
+            font-size: 12pt;
+            margin-top: 1rem;
+            margin-bottom: 0.25rem;
+          }
+          .resume-content ul {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+          }
+          .resume-content li {
+            margin: 0.25rem 0;
+          }
+          .resume-content p {
+            margin: 0.5rem 0;
+            transition: all 0.3s ease-in-out;
+          }
+          .resume-content a {
+            color: var(--heading-color);
+            text-decoration: underline;
+            transition: all 0.3s ease-in-out;
+          }
+          @media print {
+            .resume-content, .resume-content * {
+              transition: none !important;
+            }
+            .page-indicator {
+              display: none !important;
+            }
+          }
+        `}</style>
+
+        {/* Page canvas with character-based width */}
+        <div className="relative mx-auto" style={{ width: '8.5in' }}>
+          {/* Page break indicators */}
+          {pageCount > 1 && Array.from({ length: pageCount - 1 }).map((_, i) => (
+            <div
+              key={i}
+              className="page-indicator absolute left-0 right-0 flex items-center justify-center"
+              style={{
+                top: `calc(${(i + 1) * 11}in + ${i * 24}px)`,
+                height: '24px',
+                background: '#d1d5db',
+                zIndex: 10,
+              }}
+            >
+              <span className="text-xs text-gray-600 font-medium px-2 py-0.5 bg-gray-200 rounded">
+                Page {i + 2}
+              </span>
+            </div>
+          ))}
+
+          {/* The actual page canvas - 8.5x11 with 0.75in margins */}
           <div
-            ref={printRef}
-            className="resume-content p-[0.75in]"
+            className="bg-white shadow-2xl"
             style={{
-              fontFamily: currentTheme.fontFamily,
-              fontSize: currentTheme.fontSize,
-              lineHeight: currentTheme.lineHeight,
-              color: currentTheme.color,
-              ['--heading-font' as any]: currentTheme.headingFont,
-              ['--heading-color' as any]: currentTheme.headingColor,
+              width: '8.5in',
+              minHeight: `calc(${pageCount} * 11in + ${Math.max(0, pageCount - 1) * 24}px)`,
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05)',
             }}
           >
-            <style>{`
-              .resume-content {
-                transition: all 0.3s ease-in-out;
-              }
-              .resume-content h1, .resume-content h2, .resume-content h3 {
-                font-family: var(--heading-font);
-                color: var(--heading-color);
-                transition: all 0.3s ease-in-out;
-              }
-              .resume-content h1 {
-                font-size: 24pt;
-                margin-bottom: 0.5rem;
-              }
-              .resume-content h2 {
-                font-size: 14pt;
-                border-bottom: 1px solid var(--heading-color);
-                padding-bottom: 0.25rem;
-                margin-top: 1.5rem;
-                margin-bottom: 0.75rem;
-              }
-              .resume-content h3 {
-                font-size: 12pt;
-                margin-top: 1rem;
-                margin-bottom: 0.25rem;
-              }
-              .resume-content ul {
-                padding-left: 1.5rem;
-                margin: 0.5rem 0;
-              }
-              .resume-content li {
-                margin: 0.25rem 0;
-              }
-              .resume-content p {
-                margin: 0.5rem 0;
-                transition: all 0.3s ease-in-out;
-              }
-              .resume-content a {
-                color: var(--heading-color);
-                text-decoration: underline;
-                transition: all 0.3s ease-in-out;
-              }
-              @media print {
-                .resume-content, .resume-content * {
-                  transition: none !important;
-                }
-              }
-            `}</style>
-            <EditorContent editor={editor} />
+            <div
+              ref={printRef}
+              className="resume-content p-[1in]"
+              style={{
+                fontFamily: currentTheme.fontFamily,
+                fontSize: currentTheme.fontSize,
+                lineHeight: currentTheme.lineHeight,
+                color: currentTheme.color,
+                ['--heading-font' as any]: currentTheme.headingFont,
+                ['--heading-color' as any]: currentTheme.headingColor,
+                ['--export-font' as any]: currentTheme.exportFont,
+                ['--h2-border' as any]: currentTheme.decorative ? `1px solid ${currentTheme.headingColor}` : 'none',
+              }}
+            >
+              <EditorContent editor={editor} />
+            </div>
           </div>
         </div>
       </div>

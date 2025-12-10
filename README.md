@@ -1,43 +1,62 @@
-# Astro Starter Kit: Minimal
+# Resume Coach
 
-```sh
-npm create astro@latest -- --template minimal
+Strategic resume coaching for mid-career professionals.
+
+## The Problem
+
+The job market expects resumes in a format that didn't exist when many experienced professionals were doing their best work. "Increased efficiency by 40%" wasn't a metric when "getting it to work" was the achievement.
+
+Resume Coach helps translate real experience into the language employers are listening for.
+
+## Domains
+
+- **resumecoach.co** - Strategic coaching product
+- **prettify-ai.com** - Conversion utility (paste markdown → export PDF/DOCX)
+
+## Stack
+
+- Astro + React
+- Tailwind CSS + shadcn/ui
+- TipTap editor
+- Groq API (Llama 3.3, free tier)
+- Cloudflare Pages
+
+## Development
+
+```bash
+npm install
+npm run dev        # localhost:4321
+npm run build      # production build
+npm run preview    # preview production build
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Environment
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+```bash
+cp .env.example .env
+# Add GROQ API key
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Architecture
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+See `docs/` for:
+- `PRODUCT-CONTEXT.md` - Positioning, user journey, conversion points
+- `ROADMAP.md` - Feature phases (TODO)
+- `ARCHITECTURE.md` - Data flow, storage, auth (TODO)
 
-Any static assets, like images, can be placed in the `public/` directory.
+## Environments
 
-## 🧞 Commands
+- **dev**: Local development
+- **staging**: Pre-production testing
+- **prod**: Live (not promoted yet)
 
-All commands are run from the root of the project, from a terminal:
+## Current State
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+MVP with:
+- Chat-based coaching interface
+- Rich text editor with themes
+- PDF/DOCX export
+- LinkedIn import
+- Groq-powered AI (free)
 
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Next: LocalStorage persistence, chat-to-editor bridge.

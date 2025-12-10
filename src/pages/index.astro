@@ -1,5 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro'
+import { getFeatureFlags } from '../lib/features'
+
+const flags = getFeatureFlags()
+const showCoach = flags.enableCoach
+const showEditor = flags.enableEditor
+const mode = flags.mode
+
+// Redirect if only one mode is enabled
+if (mode === 'editor-only') {
+  return Astro.redirect('/editor')
+}
+if (mode === 'coach-only') {
+  return Astro.redirect('/coach')
+}
 ---
 
 <Layout title="Prettify AI - Make Your AI Resume Look Professional">
@@ -7,12 +21,12 @@ import Layout from '../layouts/Layout.astro'
     <!-- Header -->
     <header class="border-b bg-white">
       <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div class="text-xl font-bold text-primary">prettify.ai</div>
+        <div class="text-xl font-bold text-primary">prettify-ai.com</div>
         <div class="flex items-center gap-3">
-          <a href="/coach" class="text-sm text-gray-600 hover:text-primary">AI Coach</a>
-          <a href="/editor" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+          {showCoach && <a href="/coach" class="text-sm text-gray-600 hover:text-primary">AI Coach</a>}
+          {showEditor && <a href="/editor" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
             Open Editor
-          </a>
+          </a>}
         </div>
       </div>
     </header>
@@ -30,28 +44,32 @@ import Layout from '../layouts/Layout.astro'
           Paste. Style. Export to PDF or Word. Apply in 2 minutes.
         </p>
 
-        <!-- Two paths -->
-        <div class="grid md:grid-cols-2 gap-6 my-12 max-w-3xl mx-auto">
+        <!-- Two paths (only show both if both are enabled) -->
+        <div class={`grid ${showCoach && showEditor ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-md'} gap-6 my-12 max-w-3xl mx-auto`}>
 
-          <!-- Path 1: Already have resume -->
-          <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-primary transition-colors text-left">
-            <div class="text-sm font-medium text-primary mb-2">I HAVE A RESUME</div>
-            <h3 class="text-xl font-bold mb-3">Format & Export</h3>
-            <p class="text-gray-600 text-sm mb-6">Paste markdown from ChatGPT or Claude. Choose a theme. Download as PDF or DOCX.</p>
-            <a href="/editor" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6">
-              Open Editor
-            </a>
-          </div>
+          {showEditor && (
+            <!-- Path 1: Already have resume -->
+            <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-primary transition-colors text-left">
+              <div class="text-sm font-medium text-primary mb-2">I HAVE A RESUME</div>
+              <h3 class="text-xl font-bold mb-3">Format & Export</h3>
+              <p class="text-gray-600 text-sm mb-6">Paste markdown from ChatGPT or Claude. Choose a theme. Download as PDF or DOCX.</p>
+              <a href="/editor" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6">
+                Open Editor
+              </a>
+            </div>
+          )}
 
-          <!-- Path 2: Need help -->
-          <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-purple-500 transition-colors text-left">
-            <div class="text-sm font-medium text-purple-600 mb-2">I NEED HELP</div>
-            <h3 class="text-xl font-bold mb-3">AI Resume Coach</h3>
-            <p class="text-gray-600 text-sm mb-6">Chat with AI to build your resume. Import from LinkedIn. Get help with gaps and career changes.</p>
-            <a href="/coach" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 h-11 px-6">
-              Start Coaching
-            </a>
-          </div>
+          {showCoach && (
+            <!-- Path 2: Need help -->
+            <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-purple-500 transition-colors text-left">
+              <div class="text-sm font-medium text-purple-600 mb-2">I NEED HELP</div>
+              <h3 class="text-xl font-bold mb-3">AI Resume Coach</h3>
+              <p class="text-gray-600 text-sm mb-6">Chat with AI to build your resume. Import from LinkedIn. Get help with gaps and career changes.</p>
+              <a href="/coach" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 h-11 px-6">
+                Start Coaching
+              </a>
+            </div>
+          )}
         </div>
 
         <p class="text-sm text-gray-500">100% free. No signup. No payment. Ever.</p>
@@ -83,7 +101,7 @@ import Layout from '../layouts/Layout.astro'
           <h2 class="text-xl font-semibold mb-4">Power User Tip</h2>
           <p class="text-gray-600 mb-4">Drag this bookmarklet to your browser. Select text in ChatGPT, click it, and it opens here formatted.</p>
           <a
-            href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select your resume text first!');return;}window.open('https://prettifyai.pages.dev/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
+            href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select your resume text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
             onclick="event.preventDefault();alert('Drag this to your bookmark bar!');"
           >

@@ -1,6 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import Editor from '../components/Editor'
+import { getFeatureFlags } from '../lib/features'
+
+const flags = getFeatureFlags()
+
+// Redirect to coach if editor is disabled
+if (!flags.enableEditor) {
+  return Astro.redirect(flags.enableCoach ? '/coach' : '/')
+}
 ---
 
 <Layout title="Resume Editor | Prettify AI">
