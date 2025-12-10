@@ -37,7 +37,7 @@ function getDeploymentMode(): DeploymentMode {
   if (envMode === 'editor-only' || envMode === 'coach-only' || envMode === 'full') {
     return envMode
   }
-  return 'full' // Default to full experience
+  return 'editor-only' // Default for prettify-ai.com
 }
 
 /**
