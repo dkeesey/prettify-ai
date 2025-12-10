@@ -7,13 +7,14 @@ const showCoach = flags.enableCoach
 const showEditor = flags.enableEditor
 const mode = flags.mode
 
-// Redirect if only one mode is enabled
+// Redirect only for single-feature modes (not 'landing' or 'full')
 if (mode === 'editor-only') {
   return Astro.redirect('/editor')
 }
 if (mode === 'coach-only') {
   return Astro.redirect('/coach')
 }
+// 'landing' and 'full' modes show this page
 ---
 
 <Layout title="Prettify AI - Make Your AI Resume Look Professional">

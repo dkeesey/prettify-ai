@@ -10,7 +10,7 @@
  * - "full": Both coach and editor with integrated flow (default)
  */
 
-export type DeploymentMode = 'editor-only' | 'coach-only' | 'full'
+export type DeploymentMode = 'editor-only' | 'coach-only' | 'full' | 'landing'
 
 export interface FeatureFlags {
   // Core deployment mode
@@ -34,10 +34,10 @@ export interface FeatureFlags {
  */
 function getDeploymentMode(): DeploymentMode {
   const envMode = import.meta.env.PUBLIC_DEPLOYMENT_MODE
-  if (envMode === 'editor-only' || envMode === 'coach-only' || envMode === 'full') {
+  if (envMode === 'editor-only' || envMode === 'coach-only' || envMode === 'full' || envMode === 'landing') {
     return envMode
   }
-  return 'editor-only' // Default for prettify-ai.com
+  return 'landing' // Default for prettify-ai.com - shows landing page with editor only
 }
 
 /**
@@ -58,6 +58,14 @@ function buildFeatureFlags(): FeatureFlags {
   // Base configuration from mode
   const modeConfig: Record<DeploymentMode, Partial<FeatureFlags>> = {
     'editor-only': {
+      enableCoach: false,
+      enableEditor: true,
+      enableLinkedInImport: false,
+      enableAIGenerate: false,
+      enableExport: true,
+    },
+    'landing': {
+      // Shows landing page with editor card only (no coach)
       enableCoach: false,
       enableEditor: true,
       enableLinkedInImport: false,
