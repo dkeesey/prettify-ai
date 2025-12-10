@@ -17,7 +17,7 @@ if (mode === 'coach-only') {
 // 'landing' and 'full' modes show this page
 ---
 
-<Layout title="Prettify AI - Make Your AI Resume Look Professional">
+<Layout title="Prettify AI - Convert LLM Markdown to Professional Documents">
   <div class="min-h-screen flex flex-col">
     <!-- Header -->
     <header class="border-b bg-white">
@@ -38,61 +38,66 @@ if (mode === 'coach-only') {
 
         <!-- Main headline -->
         <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
-          AI Wrote Your Resume <span class="text-gray-400">(in markdown)</span><br/>
-          <span class="text-primary">Now Make It Look Professional.</span>
+          Turn LLM Markdown Into<br/>
+          <span class="text-primary">Professional Documents</span>
         </h1>
         <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-          Paste. Style. Export to PDF or Word. Apply in 2 minutes.
+          Paste markdown from ChatGPT, Claude, or any AI. Style it. Export to PDF or Word.
         </p>
 
-        <!-- Two paths (only show both if both are enabled) -->
-        <div class={`grid ${showCoach && showEditor ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-md'} gap-6 my-12 max-w-3xl mx-auto`}>
-
-          {showEditor && (
-            <!-- Path 1: Already have resume -->
-            <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-primary transition-colors text-left">
-              <div class="text-sm font-medium text-primary mb-2">I HAVE A RESUME</div>
-              <h3 class="text-xl font-bold mb-3">Format & Export</h3>
-              <p class="text-gray-600 text-sm mb-6">Paste markdown from ChatGPT or Claude. Choose a theme. Download as PDF or DOCX.</p>
-              <a href="/editor" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-6">
-                Open Editor
-              </a>
-            </div>
-          )}
-
-          {showCoach && (
-            <!-- Path 2: Need help -->
-            <div class="bg-white p-8 rounded-xl border-2 border-gray-200 hover:border-purple-500 transition-colors text-left">
-              <div class="text-sm font-medium text-purple-600 mb-2">I NEED HELP</div>
-              <h3 class="text-xl font-bold mb-3">AI Resume Coach</h3>
-              <p class="text-gray-600 text-sm mb-6">Chat with AI to build your resume. Import from LinkedIn. Get help with gaps and career changes.</p>
-              <a href="/coach" class="inline-flex items-center justify-center w-full rounded-md font-medium bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 h-11 px-6">
-                Start Coaching
-              </a>
-            </div>
-          )}
+        <!-- Single CTA -->
+        <div class="my-12">
+          <a href="/editor" class="inline-flex items-center justify-center rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-10 text-lg">
+            Open Editor
+          </a>
+          <p class="text-sm text-gray-500 mt-4">Free. No signup. No payment.</p>
         </div>
 
-        <p class="text-sm text-gray-500">100% free. No signup. No payment. Ever.</p>
+        <!-- Use cases -->
+        <div class="mt-16 pt-12 border-t">
+          <h2 class="text-2xl font-bold mb-8">Works Great For</h2>
+          <div class="grid md:grid-cols-4 gap-6 text-left max-w-4xl mx-auto">
+            <div class="bg-white p-5 rounded-lg border">
+              <div class="text-2xl mb-2">📄</div>
+              <h3 class="font-semibold mb-1">Resumes</h3>
+              <p class="text-gray-600 text-sm">ATS-friendly DOCX or styled PDF</p>
+            </div>
+            <div class="bg-white p-5 rounded-lg border">
+              <div class="text-2xl mb-2">✉️</div>
+              <h3 class="font-semibold mb-1">Cover Letters</h3>
+              <p class="text-gray-600 text-sm">Professional formatting in seconds</p>
+            </div>
+            <div class="bg-white p-5 rounded-lg border">
+              <div class="text-2xl mb-2">📝</div>
+              <h3 class="font-semibold mb-1">Reports</h3>
+              <p class="text-gray-600 text-sm">Clean headers, lists, sections</p>
+            </div>
+            <div class="bg-white p-5 rounded-lg border">
+              <div class="text-2xl mb-2">📋</div>
+              <h3 class="font-semibold mb-1">Any Document</h3>
+              <p class="text-gray-600 text-sm">If it's markdown, we can style it</p>
+            </div>
+          </div>
+        </div>
 
         <!-- How it works -->
-        <div class="mt-20 pt-12 border-t">
+        <div class="mt-16 pt-12 border-t">
           <h2 class="text-2xl font-bold mb-8">How It Works</h2>
           <div class="grid md:grid-cols-3 gap-8 text-left max-w-3xl mx-auto">
             <div>
               <div class="text-4xl font-bold text-primary/20 mb-2">1</div>
-              <h3 class="font-semibold mb-2">Paste Your Markdown</h3>
-              <p class="text-gray-600 text-sm">Copy the resume ChatGPT or Claude generated. Paste it in. We convert markdown to styled HTML automatically.</p>
+              <h3 class="font-semibold mb-2">Paste Markdown</h3>
+              <p class="text-gray-600 text-sm">Copy output from ChatGPT, Claude, or any LLM. Paste it in. We detect and convert markdown automatically.</p>
             </div>
             <div>
               <div class="text-4xl font-bold text-primary/20 mb-2">2</div>
-              <h3 class="font-semibold mb-2">Choose a Style</h3>
-              <p class="text-gray-600 text-sm">Professional, Modern, or ATS-friendly. Pick the look that fits your industry. Preview instantly.</p>
+              <h3 class="font-semibold mb-2">Choose a Theme</h3>
+              <p class="text-gray-600 text-sm">Professional, Modern, Classic, or ATS-friendly. Serif or sans-serif. Preview your changes live.</p>
             </div>
             <div>
               <div class="text-4xl font-bold text-primary/20 mb-2">3</div>
-              <h3 class="font-semibold mb-2">Export & Apply</h3>
-              <p class="text-gray-600 text-sm">Download as PDF for email or DOCX for ATS systems. Attach to your application. Done.</p>
+              <h3 class="font-semibold mb-2">Export</h3>
+              <p class="text-gray-600 text-sm">Download as PDF for sharing or DOCX for editing. Typography is consistent across formats.</p>
             </div>
           </div>
         </div>
@@ -100,9 +105,9 @@ if (mode === 'coach-only') {
         <!-- Bookmarklet -->
         <div class="mt-16 pt-8 border-t">
           <h2 class="text-xl font-semibold mb-4">Power User Tip</h2>
-          <p class="text-gray-600 mb-4">Drag this bookmarklet to your browser. Select text in ChatGPT, click it, and it opens here formatted.</p>
+          <p class="text-gray-600 mb-4">Drag this to your bookmark bar. Select text in ChatGPT, click it, and it opens here ready to format.</p>
           <a
-            href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select your resume text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
+            href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
             onclick="event.preventDefault();alert('Drag this to your bookmark bar!');"
           >
@@ -116,7 +121,7 @@ if (mode === 'coach-only') {
     <!-- Footer -->
     <footer class="border-t bg-white py-6">
       <div class="container mx-auto px-4 text-center text-sm text-gray-500">
-        <p>Built for job seekers who use AI. <a href="https://github.com/deankeesey" class="underline hover:text-primary">Open source</a>.</p>
+        <p>A simple utility for people who use AI. <a href="https://github.com/dkeesey/prettify-ai" class="underline hover:text-primary">Open source</a>.</p>
       </div>
     </footer>
   </div>
