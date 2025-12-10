@@ -3,109 +3,165 @@ import Layout from '../layouts/Layout.astro'
 import { getFeatureFlags } from '../lib/features'
 
 const flags = getFeatureFlags()
-const showCoach = flags.enableCoach
-const showEditor = flags.enableEditor
 const mode = flags.mode
 
-// Redirect only for single-feature modes (not 'landing' or 'full')
+// Redirect only for single-feature modes
 if (mode === 'editor-only') {
   return Astro.redirect('/editor')
 }
 if (mode === 'coach-only') {
   return Astro.redirect('/coach')
 }
-// 'landing' and 'full' modes show this page
 ---
 
-<Layout title="Prettify AI - Convert LLM Markdown to Professional Documents">
-  <div class="min-h-screen flex flex-col">
-    <!-- Header -->
-    <header class="border-b bg-white">
+<Layout title="Prettify AI - Convert LLM Markdown to Professional DOCX & PDF">
+  <div class="min-h-screen flex flex-col bg-gray-50">
+    <!-- Minimal Header -->
+    <header class="bg-white border-b">
       <div class="container mx-auto px-4 py-4 flex items-center justify-between">
         <div class="text-xl font-bold text-primary">prettify-ai.com</div>
-        <div class="flex items-center gap-3">
-          {showCoach && <a href="/coach" class="text-sm text-gray-600 hover:text-primary">AI Coach</a>}
-          {showEditor && <a href="/editor" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
-            Open Editor
-          </a>}
-        </div>
+        <a href="/editor" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+          Open Editor
+        </a>
       </div>
     </header>
 
-    <!-- Hero -->
-    <main class="flex-1 bg-gradient-to-b from-white to-gray-50">
-      <div class="container mx-auto px-4 py-16 text-center max-w-4xl">
+    <main class="flex-1">
+      <!-- Hero - The Problem/Solution -->
+      <section class="bg-white border-b">
+        <div class="container mx-auto px-4 py-20 max-w-4xl">
+          <div class="text-center">
+            <p class="text-sm font-medium text-primary mb-4 uppercase tracking-wide">Free Conversion Tool</p>
+            <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">
+              LLM output looks like this:<br/>
+              <code class="text-2xl md:text-3xl bg-gray-100 px-3 py-1 rounded font-mono text-gray-600">## Experience</code>
+            </h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Turn it into professionally styled <strong>PDF</strong> and <strong>DOCX</strong> documents in seconds.
+            </p>
+            <a href="/editor" class="inline-flex items-center justify-center rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-10 text-lg">
+              Start Converting
+            </a>
+          </div>
+        </div>
+      </section>
 
-        <!-- Main headline -->
-        <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
-          Turn LLM Markdown Into<br/>
-          <span class="text-primary">Professional Documents</span>
-        </h1>
-        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-          Paste markdown from ChatGPT, Claude, or any AI. Style it. Export to PDF or Word.
-        </p>
+      <!-- The Flow - Horizontal Steps -->
+      <section class="py-16">
+        <div class="container mx-auto px-4 max-w-4xl">
+          <h2 class="text-2xl font-bold text-center mb-12">Three Steps</h2>
 
-        <!-- Single CTA -->
-        <div class="my-12">
-          <a href="/editor" class="inline-flex items-center justify-center rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-10 text-lg">
-            Open Editor
+          <!-- Horizontal flow on desktop, vertical on mobile -->
+          <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
+            <!-- Step 1 -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center">1</div>
+              <div>
+                <h3 class="font-semibold">Paste Markdown</h3>
+                <p class="text-sm text-gray-500">Copy from ChatGPT/Claude, or use bookmarklet</p>
+              </div>
+            </div>
+
+            <!-- Arrow -->
+            <svg class="hidden md:block w-6 h-6 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+            <svg class="md:hidden w-6 h-6 text-gray-300 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+
+            <!-- Step 2 -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center">2</div>
+              <div>
+                <h3 class="font-semibold">Select Theme</h3>
+                <p class="text-sm text-gray-500">6 styles: serif, sans-serif, ATS-friendly</p>
+              </div>
+            </div>
+
+            <!-- Arrow -->
+            <svg class="hidden md:block w-6 h-6 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+            <svg class="md:hidden w-6 h-6 text-gray-300 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+
+            <!-- Step 3 -->
+            <div class="flex items-center gap-3">
+              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center">3</div>
+              <div>
+                <h3 class="font-semibold">Export</h3>
+                <p class="text-sm text-gray-500">Download as PDF or DOCX</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Output Formats Explained -->
+      <section class="bg-white border-y py-16">
+        <div class="container mx-auto px-4 max-w-4xl">
+          <h2 class="text-2xl font-bold text-center mb-12">Two Outputs, Different Purposes</h2>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <div class="p-6 rounded-xl border-2 border-gray-200">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold">DOCX</h3>
+              </div>
+              <p class="text-gray-600 mb-4">For job portals and ATS systems. Simple formatting that machines can parse.</p>
+              <ul class="text-sm text-gray-500 space-y-1">
+                <li>Upload to LinkedIn, Indeed, Workday</li>
+                <li>ATS-friendly structure</li>
+                <li>Editable in Word or Google Docs</li>
+              </ul>
+            </div>
+
+            <div class="p-6 rounded-xl border-2 border-primary bg-primary/5">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="p-2 bg-primary/20 rounded-lg">
+                  <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold">PDF</h3>
+              </div>
+              <p class="text-gray-600 mb-4">For humans. Beautiful formatting exactly as you see it on screen.</p>
+              <ul class="text-sm text-gray-500 space-y-1">
+                <li>Email directly to recruiters</li>
+                <li>Attach to personal applications</li>
+                <li>Print for interviews</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Common Use Case -->
+      <section class="py-16">
+        <div class="container mx-auto px-4 max-w-3xl text-center">
+          <p class="text-sm font-medium text-gray-500 mb-4">COMMON USE CASE</p>
+          <h2 class="text-2xl font-bold mb-6">AI-Generated Resumes</h2>
+          <p class="text-gray-600 mb-8">
+            You asked ChatGPT or Claude to write your resume. It gave you great content in markdown format.
+            Now you need it in a format you can actually submit. That's what this tool does.
+          </p>
+          <a href="/editor" class="inline-flex items-center justify-center rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8">
+            Try It Now
           </a>
-          <p class="text-sm text-gray-500 mt-4">Free. No signup. No payment.</p>
         </div>
+      </section>
 
-        <!-- Use cases -->
-        <div class="mt-16 pt-12 border-t">
-          <h2 class="text-2xl font-bold mb-8">Works Great For</h2>
-          <div class="grid md:grid-cols-4 gap-6 text-left max-w-4xl mx-auto">
-            <div class="bg-white p-5 rounded-lg border">
-              <div class="text-2xl mb-2">📄</div>
-              <h3 class="font-semibold mb-1">Resumes</h3>
-              <p class="text-gray-600 text-sm">ATS-friendly DOCX or styled PDF</p>
-            </div>
-            <div class="bg-white p-5 rounded-lg border">
-              <div class="text-2xl mb-2">✉️</div>
-              <h3 class="font-semibold mb-1">Cover Letters</h3>
-              <p class="text-gray-600 text-sm">Professional formatting in seconds</p>
-            </div>
-            <div class="bg-white p-5 rounded-lg border">
-              <div class="text-2xl mb-2">📝</div>
-              <h3 class="font-semibold mb-1">Reports</h3>
-              <p class="text-gray-600 text-sm">Clean headers, lists, sections</p>
-            </div>
-            <div class="bg-white p-5 rounded-lg border">
-              <div class="text-2xl mb-2">📋</div>
-              <h3 class="font-semibold mb-1">Any Document</h3>
-              <p class="text-gray-600 text-sm">If it's markdown, we can style it</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- How it works -->
-        <div class="mt-16 pt-12 border-t">
-          <h2 class="text-2xl font-bold mb-8">How It Works</h2>
-          <div class="grid md:grid-cols-3 gap-8 text-left max-w-3xl mx-auto">
-            <div>
-              <div class="text-4xl font-bold text-primary/20 mb-2">1</div>
-              <h3 class="font-semibold mb-2">Paste Markdown</h3>
-              <p class="text-gray-600 text-sm">Copy output from ChatGPT, Claude, or any LLM. Paste it in. We detect and convert markdown automatically.</p>
-            </div>
-            <div>
-              <div class="text-4xl font-bold text-primary/20 mb-2">2</div>
-              <h3 class="font-semibold mb-2">Choose a Theme</h3>
-              <p class="text-gray-600 text-sm">Professional, Modern, Classic, or ATS-friendly. Serif or sans-serif. Preview your changes live.</p>
-            </div>
-            <div>
-              <div class="text-4xl font-bold text-primary/20 mb-2">3</div>
-              <h3 class="font-semibold mb-2">Export</h3>
-              <p class="text-gray-600 text-sm">Download as PDF for sharing or DOCX for editing. Typography is consistent across formats.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bookmarklet -->
-        <div class="mt-16 pt-8 border-t">
-          <h2 class="text-xl font-semibold mb-4">Power User Tip</h2>
-          <p class="text-gray-600 mb-4">Drag this to your bookmark bar. Select text in ChatGPT, click it, and it opens here ready to format.</p>
+      <!-- Power User Feature -->
+      <section class="bg-white border-t py-12">
+        <div class="container mx-auto px-4 max-w-2xl text-center">
+          <h3 class="font-semibold mb-3">Power User Tip: Bookmarklet</h3>
+          <p class="text-gray-600 text-sm mb-4">Drag this to your bookmark bar. Select text in ChatGPT, click it, and it opens here ready to convert.</p>
           <a
             href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
@@ -115,13 +171,13 @@ if (mode === 'coach-only') {
             Prettify It
           </a>
         </div>
-      </div>
+      </section>
     </main>
 
     <!-- Footer -->
     <footer class="border-t bg-white py-6">
       <div class="container mx-auto px-4 text-center text-sm text-gray-500">
-        <p>A simple utility for people who use AI. <a href="https://github.com/dkeesey/prettify-ai" class="underline hover:text-primary">Open source</a>.</p>
+        <p>Free. No signup. No payment. <a href="https://github.com/dkeesey/prettify-ai" class="underline hover:text-primary">Open source</a>.</p>
       </div>
     </footer>
   </div>
