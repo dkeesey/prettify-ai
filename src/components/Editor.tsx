@@ -1,7 +1,8 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
+import Placeholder from '@tiptap/extension-placeholder'
 import DOMPurify from 'dompurify'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { markdownToHtml } from '@/lib/markdown'
@@ -49,6 +50,7 @@ import {
   Trash2,
   Save,
   Bookmark,
+  ClipboardPaste,
 } from 'lucide-react'
 
 // API calls now go through server-side /api/chat endpoint
@@ -421,8 +423,12 @@ export default function Editor() {
       Link.configure({
         openOnClick: false,
       }),
+      Placeholder.configure({
+        placeholder: 'Paste your markdown here, or click Sample to see an example...',
+      }),
     ],
     content: '',
+    autofocus: 'end',
     onUpdate: ({ editor }) => {
       const text = editor.getText()
       const words = text.trim().split(/\s+/).filter(Boolean).length
@@ -437,6 +443,25 @@ export default function Editor() {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[600px] p-8',
       },
+    },
+  })
+
+  // Track active formatting state reactively for toolbar buttons
+  // This is required in React because TipTap doesn't auto-re-render on selection changes
+  const editorState = useEditorState({
+    editor,
+    selector: ({ editor: e }) => {
+      if (!e) return null
+      return {
+        isBold: e.isActive('bold'),
+        isItalic: e.isActive('italic'),
+        isUnderline: e.isActive('underline'),
+        isH1: e.isActive('heading', { level: 1 }),
+        isH2: e.isActive('heading', { level: 2 }),
+        isH3: e.isActive('heading', { level: 3 }),
+        isBulletList: e.isActive('bulletList'),
+        isOrderedList: e.isActive('orderedList'),
+      }
     },
   })
 
@@ -777,51 +802,8 @@ export default function Editor() {
       {/* Header/Nav */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Dialog open={bookmarkletOpen} onOpenChange={setBookmarkletOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" title="Install browser bookmarklet to send text here from any page">
-                  <Bookmark className="h-4 w-4 mr-1" />
-                  Bookmarklet
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Install Browser Bookmarklet</DialogTitle>
-                  <DialogDescription>
-                    A one-click tool to send selected text from any webpage to this editor.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-4">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-blue-900 mb-2">Installation:</p>
-                    <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
-                      <li>Show your browser's bookmark bar (Ctrl+Shift+B)</li>
-                      <li>Drag the button below to your bookmark bar</li>
-                      <li>Done! Click it anytime with text selected</li>
-                    </ol>
-                  </div>
-                  <div className="flex justify-center">
-                    <a
-                      href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
-                      onClick={(e) => { e.preventDefault(); alert('Drag this button to your bookmark bar!'); }}
-                    >
-                      <Bookmark className="h-4 w-4" />
-                      Prettify It
-                    </a>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-sm font-medium text-gray-700 mb-1">Usage:</p>
-                    <p className="text-xs text-gray-600">
-                      Select any text (ChatGPT output, docs, markdown), click the bookmarklet, and it opens here formatted and ready to export.
-                    </p>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            <a href="/" className="text-xl font-bold text-primary">prettify-ai.com</a>
-          </div>
+          <a href="/" className="text-xl font-bold text-primary">prettify-ai.com</a>
+          <p className="text-sm text-gray-500 hidden md:block">The bridge from LLM output to files you can use</p>
           <div className="flex items-center gap-2">
             {features.coach && (
               <Button variant="outline" size="sm" asChild>
@@ -1048,18 +1030,129 @@ export default function Editor() {
               </DialogContent>
             </Dialog>
             )}
-            <Button variant="outline" size="sm" onClick={loadSample}>
-              Paste Sample
+            <Button variant="ghost" size="sm" onClick={clearContent} title="Clear content">
+              <Trash2 className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" onClick={convertMarkdown}>
+          </div>
+        </div>
+      </header>
+
+      {/* WORKFLOW BAR - The 4-Step Process */}
+      <div className="bg-gray-50 border-b px-4 py-2">
+        <div className="max-w-[8.5in] mx-auto flex items-center gap-4">
+          {/* Step 1: Input - Vertical stack */}
+          <div className="flex items-start gap-2 flex-shrink-0">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-300 text-gray-700 text-xs font-bold flex items-center justify-center mt-0.5">1</span>
+            <div className="flex flex-col gap-0.5">
+              <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={loadSample}>
+                <FileText className="h-3 w-3 mr-1.5" />
+                Paste sample MD
+              </Button>
+              <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={() => navigator.clipboard.readText().then(text => {
+                if (text) {
+                  editor.commands.setContent(text)
+                }
+              }).catch(() => {
+                alert('Could not access clipboard. Please paste directly into the editor (Ctrl+V / Cmd+V).')
+              })}>
+                <ClipboardPaste className="h-3 w-3 mr-1.5" />
+                Paste clipboard
+              </Button>
+              <Dialog open={bookmarkletOpen} onOpenChange={setBookmarkletOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-6 text-xs justify-start text-gray-400 hover:text-primary px-1">
+                    <Bookmark className="h-3 w-3 mr-1.5" />
+                    Bookmarklet...
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Install Browser Bookmarklet</DialogTitle>
+                    <DialogDescription>
+                      One-click tool to send text from ChatGPT, Claude, or any page directly here.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4 space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-sm font-medium text-blue-900 mb-2">Installation:</p>
+                      <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                        <li>Show your browser's bookmark bar (Ctrl+Shift+B)</li>
+                        <li>Drag the button below to your bookmark bar</li>
+                        <li>Done! Click it anytime with text selected</li>
+                      </ol>
+                    </div>
+                    <div className="flex justify-center">
+                      <a
+                        href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
+                        onClick={(e) => { e.preventDefault(); alert('Drag this button to your bookmark bar!'); }}
+                      >
+                        <Bookmark className="h-4 w-4" />
+                        Prettify It
+                      </a>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm font-medium text-gray-700 mb-1">Usage:</p>
+                      <p className="text-xs text-gray-600">
+                        Select any text (ChatGPT output, docs, markdown), click the bookmarklet, and it opens here formatted and ready to export.
+                      </p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+
+          {/* Step 2: Convert */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-300 text-gray-700 text-[10px] font-bold flex items-center justify-center">2</span>
+            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={convertMarkdown}>
               Convert MD
             </Button>
+          </div>
+
+          {/* Arrow */}
+          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+
+          {/* Step 3: Theme - THE HERO */}
+          <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2 py-1 border-2 border-primary shadow-sm flex-shrink-0">
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center shadow">3</span>
+            <span className="text-xs font-medium text-primary">Theme:</span>
+            <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
+              <SelectTrigger className="w-[130px] h-7 text-xs border-primary bg-white font-medium text-primary">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(themes).map(([key, t]) => (
+                  <SelectItem key={key} value={key}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Arrow */}
+          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+
+          {/* Step 4: Export */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-300 text-gray-700 text-[10px] font-bold flex items-center justify-center">4</span>
             {features.export && (
-              <>
+              <div className="flex items-center gap-1">
                 <Dialog open={docxConfirmOpen} onOpenChange={setDocxConfirmOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <FileText className="h-4 w-4 mr-1" />
+                    <Button variant="outline" size="sm" className="h-7 text-xs">
+                      <FileDown className="h-3 w-3 mr-1" />
                       DOCX
                     </Button>
                   </DialogTrigger>
@@ -1098,118 +1191,93 @@ export default function Editor() {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button variant="default" size="sm" onClick={() => handlePrint()}>
-                  <FileDown className="h-4 w-4 mr-1" />
+                <Button variant="default" size="sm" className="h-7 text-xs" onClick={() => handlePrint()}>
+                  <FileDown className="h-3 w-3 mr-1" />
                   PDF
                 </Button>
-              </>
+              </div>
             )}
-            <Button variant="ghost" size="sm" onClick={clearContent}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Formatting Toolbar - Above Editor */}
-      <div className="bg-white border-b px-4 py-2">
-        <div className="max-w-[8.5in] mx-auto flex items-center gap-2 flex-wrap">
-          {/* Formatting buttons */}
-          <div className="flex items-center gap-1 border-r pr-2">
+      {/* Optional Editing Tools - De-emphasized */}
+      <div className="bg-white/50 border-b px-4 py-1.5">
+        <div className="max-w-[8.5in] mx-auto flex items-center gap-2">
+          <span className="text-xs text-gray-400 mr-2">Edit text (optional):</span>
+          {/* Formatting buttons - using editorState for reactive active state */}
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleBold().run()}
-              className={editor.isActive('bold') ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isBold ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <Bold className="h-4 w-4" />
+              <Bold className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={editor.isActive('italic') ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isItalic ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <Italic className="h-4 w-4" />
+              <Italic className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={editor.isActive('underline') ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isUnderline ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <UnderlineIcon className="h-4 w-4" />
+              <UnderlineIcon className="h-3.5 w-3.5" />
             </Button>
-          </div>
-
-          {/* Headings */}
-          <div className="flex items-center gap-1 border-r pr-2">
+            <span className="w-px h-4 bg-gray-200 mx-1" />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-              className={editor.isActive('heading', { level: 1 }) ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isH1 ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <Heading1 className="h-4 w-4" />
+              <Heading1 className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={editor.isActive('heading', { level: 2 }) ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isH2 ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <Heading2 className="h-4 w-4" />
+              <Heading2 className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              className={editor.isActive('heading', { level: 3 }) ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isH3 ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <Heading3 className="h-4 w-4" />
+              <Heading3 className="h-3.5 w-3.5" />
             </Button>
-          </div>
-
-          {/* Lists */}
-          <div className="flex items-center gap-1 border-r pr-2">
+            <span className="w-px h-4 bg-gray-200 mx-1" />
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={editor.isActive('bulletList') ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isBulletList ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <List className="h-4 w-4" />
+              <List className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => editor.chain().focus().toggleOrderedList().run()}
-              className={editor.isActive('orderedList') ? 'bg-muted' : ''}
+              className={`h-7 w-7 p-0 ${editorState?.isOrderedList ? 'bg-primary/20 text-primary' : 'text-gray-400 hover:text-gray-600'}`}
             >
-              <ListOrdered className="h-4 w-4" />
+              <ListOrdered className="h-3.5 w-3.5" />
             </Button>
-          </div>
-
-          {/* Theme selector */}
-          <div className="flex items-center gap-2 border-r pr-2">
-            <Label className="text-sm text-muted-foreground whitespace-nowrap">Select Theme</Label>
-            <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
-              <SelectTrigger className="w-[140px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(themes).map(([key, t]) => (
-                  <SelectItem key={key} value={key}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Resume style selector - only show when AI features enabled */}
           {features.aiGenerate && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 ml-4">
               <Label className="text-sm text-muted-foreground whitespace-nowrap">Writing Style</Label>
               <Select value={resumeStyle} onValueChange={(v) => setResumeStyle(v as ResumeStyleKey)}>
                 <SelectTrigger className="w-[150px] h-8">
@@ -1227,7 +1295,7 @@ export default function Editor() {
           )}
 
           {/* Word count, page count, and save status */}
-          <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="ml-auto flex items-center gap-3 text-xs text-gray-400">
             {saveStatus === 'saving' && (
               <span className="flex items-center gap-1 text-yellow-600">
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -1249,17 +1317,17 @@ export default function Editor() {
         </div>
       </div>
 
-      {/* ATS Info Banner */}
-      <div className="bg-blue-50 border-b border-blue-100 px-4 py-2">
-        <p className="text-xs text-blue-800 text-center max-w-3xl mx-auto">
-          <strong>Pro tip:</strong> Submit DOCX to job portals (ATS-friendly, no fancy formatting).
-          Bring the polished PDF to interviews.
-        </p>
-      </div>
-
       {/* Editor content - Paginated Canvas View */}
       <div className="flex-1 overflow-auto bg-gray-200 py-8">
         <style>{`
+          /* Placeholder styling */
+          .tiptap p.is-editor-empty:first-child::before {
+            color: #9ca3af;
+            content: attr(data-placeholder);
+            float: left;
+            height: 0;
+            pointer-events: none;
+          }
           .resume-content {
             transition: all 0.3s ease-in-out;
           }
@@ -1287,9 +1355,16 @@ export default function Editor() {
           .resume-content ul {
             padding-left: 1.5rem;
             margin: 0.5rem 0;
+            list-style-type: disc;
+          }
+          .resume-content ol {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+            list-style-type: decimal;
           }
           .resume-content li {
             margin: 0.25rem 0;
+            display: list-item;
           }
           .resume-content p {
             margin: 0.5rem 0;

@@ -46,54 +46,51 @@ if (mode === 'coach-only') {
         </div>
       </section>
 
-      <!-- The Flow - Horizontal Steps -->
+      <!-- The Flow -->
       <section class="py-16">
-        <div class="container mx-auto px-4 max-w-4xl">
-          <h2 class="text-2xl font-bold text-center mb-12">Three Steps</h2>
+        <div class="container mx-auto px-4 max-w-5xl">
+          <h2 class="text-2xl font-bold text-center mb-12">How It Works</h2>
 
-          <!-- Horizontal flow on desktop, vertical on mobile -->
-          <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
-            <!-- Step 1 -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center">1</div>
-              <div>
-                <h3 class="font-semibold">Paste Markdown</h3>
-                <p class="text-sm text-gray-500">Copy from ChatGPT/Claude, or use bookmarklet</p>
+          <div class="grid md:grid-cols-4 gap-6">
+            <!-- Step 1: Paste -->
+            <div class="text-center">
+              <div class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center mx-auto mb-3">1</div>
+              <h3 class="font-semibold mb-1">Paste</h3>
+              <p class="text-sm text-gray-500">Markdown from ChatGPT, Claude, or bookmarklet</p>
+            </div>
+
+            <!-- Step 2: Convert -->
+            <div class="text-center">
+              <div class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center mx-auto mb-3">2</div>
+              <h3 class="font-semibold mb-1">Convert</h3>
+              <p class="text-sm text-gray-500">Instantly renders as formatted document</p>
+            </div>
+
+            <!-- Step 3: SELECT THEME - THE HERO -->
+            <div class="text-center md:scale-110 relative">
+              <div class="absolute inset-0 bg-primary/10 rounded-2xl -m-4 md:block hidden"></div>
+              <div class="relative">
+                <div class="w-14 h-14 rounded-full bg-primary text-white font-bold text-xl flex items-center justify-center mx-auto mb-3 shadow-lg">3</div>
+                <h3 class="font-bold text-lg text-primary mb-2">Select Theme</h3>
+                <!-- Mini theme selector preview -->
+                <div class="inline-flex items-center gap-2 bg-white border-2 border-primary rounded-lg px-3 py-2 shadow-md">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path>
+                  </svg>
+                  <span class="text-sm font-medium">Classic Serif</span>
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Transforms instantly</p>
               </div>
             </div>
 
-            <!-- Arrow -->
-            <svg class="hidden md:block w-6 h-6 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-            <svg class="md:hidden w-6 h-6 text-gray-300 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-
-            <!-- Step 2 -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center">2</div>
-              <div>
-                <h3 class="font-semibold">Select Theme</h3>
-                <p class="text-sm text-gray-500">6 styles: serif, sans-serif, ATS-friendly</p>
-              </div>
-            </div>
-
-            <!-- Arrow -->
-            <svg class="hidden md:block w-6 h-6 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-            <svg class="md:hidden w-6 h-6 text-gray-300 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-
-            <!-- Step 3 -->
-            <div class="flex items-center gap-3">
-              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white font-bold flex items-center justify-center">3</div>
-              <div>
-                <h3 class="font-semibold">Export</h3>
-                <p class="text-sm text-gray-500">Download as PDF or DOCX</p>
-              </div>
+            <!-- Step 4: Export -->
+            <div class="text-center">
+              <div class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center mx-auto mb-3">4</div>
+              <h3 class="font-semibold mb-1">Export</h3>
+              <p class="text-sm text-gray-500">Download as PDF or DOCX</p>
             </div>
           </div>
         </div>
