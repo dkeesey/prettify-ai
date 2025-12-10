@@ -152,6 +152,120 @@ A post with 50 upvotes and 10 useful comments > 500 upvotes and no engagement
 
 ---
 
+---
+
+## Templates for Resume/Job-Seeking Subreddits
+
+### For r/resumes
+
+**Title:** "Free tool to convert AI-generated resume markdown to PDF/DOCX"
+
+**Body:**
+```
+I made a simple tool that might help some of you: [prettify-ai.com](https://prettify-ai.com)
+
+**The problem it solves:**
+A lot of people here use ChatGPT or Claude to help write their resumes. The AI gives you nicely structured markdown, but then you spend 20+ minutes reformatting it in Word or Google Docs.
+
+**What it does:**
+- Paste your markdown resume
+- Pick a clean, professional theme
+- Export as PDF or DOCX
+- Edit text directly if needed
+
+**What it doesn't do:**
+- No AI writing - you bring your own content
+- No account or signup
+- No data stored anywhere (runs in your browser)
+
+It's free. I built it because I was tired of the copy-paste-reformat dance myself.
+
+Happy to hear feedback on what themes or features would be useful for resumes specifically.
+```
+
+---
+
+### For r/jobs
+
+**Title:** "Made a free tool for formatting AI-written resumes into clean PDFs"
+
+**Body:**
+```
+Quick share for job seekers using AI to help with resumes:
+
+If you're using ChatGPT/Claude to write or improve your resume, you've probably noticed the output is markdown - great structure, but annoying to format into a real document.
+
+I built [prettify-ai.com](https://prettify-ai.com) to fix that:
+
+1. Paste your AI-generated markdown
+2. Choose a professional theme
+3. Download as PDF or DOCX
+
+That's it. No signup, no fees, no AI generation (you bring your own content).
+
+Works for cover letters too - anything that's already in markdown format.
+
+Let me know if this is useful or what would make it better.
+```
+
+---
+
+### For r/GetEmployed
+
+**Title:** "Free tool: AI resume markdown → professional PDF in 30 seconds"
+
+**Body:**
+```
+For those of you using AI assistants to help with job applications:
+
+I kept running into the same problem - ChatGPT gives me a well-structured resume in markdown, but I'd spend forever reformatting it to look professional.
+
+So I made [prettify-ai.com](https://prettify-ai.com):
+- Paste markdown
+- Pick a theme
+- Export PDF or DOCX
+
+No AI generation, no account needed, runs entirely in your browser.
+
+Figured it might save some of you time during the application grind.
+```
+
+---
+
+### For r/careerguidance
+
+**Title:** "Built a tool for converting AI-written career docs to professional format"
+
+**Body:**
+```
+If you're using AI to draft resumes, cover letters, or other career documents, you might find this useful:
+
+[prettify-ai.com](https://prettify-ai.com) takes markdown (what ChatGPT/Claude outputs) and converts it to styled PDF or DOCX with one click.
+
+**Why I made it:** I was helping friends with their job searches and kept seeing them struggle to get AI output into a presentable format. The content was good, but they'd lose 30 minutes fighting with Word formatting.
+
+**It's free** - no signup, no tracking, no AI generation (you bring your own markdown).
+
+Would love feedback from people actively job searching on what themes or features would help.
+```
+
+---
+
+### Tips for Resume Subreddits Specifically:
+
+1. **Don't oversell** - these communities are skeptical of self-promotion
+2. **Emphasize "no AI writing"** - they value human-written content
+3. **Focus on the formatting pain point** - they all know it
+4. **Offer to help** - respond to questions about resume formatting generally
+5. **Don't spam** - pick ONE resume sub to start, wait for feedback
+
+**Best bets in order:**
+1. r/resumes (most relevant, active community)
+2. r/jobs (broader but receptive to tools)
+3. r/GetEmployed (smaller but engaged)
+
+---
+
 ## After Posting
 
 1. **First hour:** Respond to every comment immediately
