@@ -251,6 +251,172 @@ Would love feedback from people actively job searching on what themes or feature
 
 ---
 
+---
+
+## Templates for General/Power User Subreddits
+
+### For r/productivity
+
+**Title:** "Free tool to turn markdown into styled PDFs (for all that AI output)"
+
+**Body:**
+```
+If you use ChatGPT, Claude, Notion, Obsidian, or anything that outputs markdown, you've probably had this problem: great content, terrible formatting when you need to share it.
+
+I built [prettify-ai.com](https://prettify-ai.com) to fix that:
+- Paste any markdown
+- Pick a theme
+- Export as PDF or DOCX
+
+Use cases I built it for:
+- Meeting notes → shareable PDF
+- AI-generated docs → professional format
+- Quick reports → clean output
+- SOPs and guides → formatted docs
+
+No signup, free, runs in browser. What other use cases would be helpful?
+```
+
+---
+
+### For r/ObsidianMD
+
+**Title:** "Made a quick tool for exporting Obsidian notes to styled PDFs"
+
+**Body:**
+```
+Fellow vault dwellers -
+
+When I need to share Obsidian notes with non-Obsidian people, the export options are... limited. So I made [prettify-ai.com](https://prettify-ai.com).
+
+**Workflow:**
+1. Copy your note's markdown
+2. Paste at prettify-ai.com
+3. Pick a theme
+4. Export PDF or DOCX
+
+It handles headers, lists, bold/italic, links - the standard markdown stuff.
+
+**What it doesn't do:** Obsidian-specific syntax (dataview, callouts, embeds). Just clean markdown.
+
+Free, no account needed. Would love feedback from the community.
+```
+
+---
+
+### For r/NotionApp
+
+**Title:** "Tool for converting Notion exports to clean PDFs"
+
+**Body:**
+```
+Notion's PDF export is... okay. But if you want more control over styling:
+
+[prettify-ai.com](https://prettify-ai.com) - paste markdown, pick theme, export PDF/DOCX.
+
+**Use case:** Export Notion page as markdown → paste → styled PDF in 10 seconds.
+
+Works great for:
+- Client-facing docs
+- Meeting notes you need to email
+- SOPs that need to look professional
+- Resumes built in Notion
+
+Free, browser-based, no signup. Thoughts?
+```
+
+---
+
+### For r/ChatGPTCoding or r/LocalLLaMA
+
+**Title:** "Built a markdown→PDF tool for all that LLM output"
+
+**Body:**
+```
+We all copy-paste LLM responses constantly. When you need that output as an actual document:
+
+[prettify-ai.com](https://prettify-ai.com)
+- Paste markdown
+- Pick theme
+- PDF or DOCX
+
+Built with Astro + React, runs client-side. No AI - just formatting.
+
+Useful for:
+- Documentation from AI conversations
+- Code explanations you want to save
+- Technical writeups
+- Any markdown → professional doc
+
+Source is on GitHub. Free forever.
+```
+
+---
+
+### For r/selfhosted (if they allow it)
+
+**Title:** "prettify-ai: client-side markdown→PDF converter (no server processing)"
+
+**Body:**
+```
+For the privacy-conscious: [prettify-ai.com](https://prettify-ai.com) is a markdown to PDF/DOCX converter that runs entirely in your browser.
+
+**Why it matters:**
+- No data sent to any server
+- No account/tracking
+- All conversion happens client-side
+- Could be self-hosted (it's just static files)
+
+**Tech:** Astro + React + docx.js + browser print-to-PDF
+
+Use case: Converting AI/LLM output to shareable documents without your content hitting someone else's server.
+
+Open to feedback from this community - privacy and simplicity are the goals.
+```
+
+---
+
+### For r/Markdown
+
+**Title:** "Simple markdown→styled PDF/DOCX tool (browser-based)"
+
+**Body:**
+```
+Made a thing for the markdown faithful: [prettify-ai.com](https://prettify-ai.com)
+
+**What:** Paste markdown → pick theme → export PDF or DOCX
+
+**Why not Pandoc?** This is for when you want a GUI, multiple themes, and quick iteration. Pandoc is still better for automation/CLI workflows.
+
+**Features:**
+- Live preview with WYSIWYG editing
+- Multiple professional themes
+- PDF and DOCX export
+- No install, runs in browser
+
+Built it because I kept getting markdown from AI tools and needed a fast way to make it presentable.
+
+What features would make this more useful?
+```
+
+---
+
+### Tips for General/Power User Subreddits:
+
+1. **Lead with the pain point** - they know markdown, they know the export problem
+2. **Be technical** - these communities appreciate knowing how it works
+3. **Acknowledge alternatives** - "Pandoc is great for X, this is for Y"
+4. **Mention privacy** - power users care about where their data goes
+5. **Ask for features** - these communities have strong opinions
+
+**Best bets in order:**
+1. r/productivity (large, receptive to tools)
+2. r/ObsidianMD (passionate community, clear use case)
+3. r/ChatGPTCoding (your people)
+4. r/Markdown (niche but perfect fit)
+
+---
+
 ### Tips for Resume Subreddits Specifically:
 
 1. **Don't oversell** - these communities are skeptical of self-promotion
