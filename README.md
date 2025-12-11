@@ -1,24 +1,30 @@
-# Resume Coach
+# prettify-ai
 
-Strategic resume coaching for mid-career professionals.
+Free tool to convert LLM markdown output into professionally styled PDF and DOCX documents.
 
-## The Problem
+**Live at:** https://prettify-ai.com
 
-The job market expects resumes in a format that didn't exist when many experienced professionals were doing their best work. "Increased efficiency by 40%" wasn't a metric when "getting it to work" was the achievement.
+## What It Does
 
-Resume Coach helps translate real experience into the language employers are listening for.
+1. Paste markdown from ChatGPT, Claude, or any LLM
+2. Pick a professional theme
+3. Export as PDF or DOCX
 
-## Domains
+Works for resumes, cover letters, reports, SOPs - anything markdown.
 
-- **resumecoach.co** - Strategic coaching product
-- **prettify-ai.com** - Conversion utility (paste markdown → export PDF/DOCX)
+## Why
+
+LLMs give great structured output, but getting it into a shareable format means copy-pasting into Word and fighting with formatting. This skips that.
+
+- **Notion** can't export DOCX
+- **Google Docs** doesn't style markdown
+- **This** does both
 
 ## Stack
 
 - Astro + React
 - Tailwind CSS + shadcn/ui
 - TipTap editor
-- Groq API (Llama 3.3, free tier)
 - Cloudflare Pages
 
 ## Development
@@ -27,36 +33,22 @@ Resume Coach helps translate real experience into the language employers are lis
 npm install
 npm run dev        # localhost:4321
 npm run build      # production build
-npm run preview    # preview production build
+npm run test:run   # run tests
 ```
 
-## Environment
+## Features
 
-```bash
-cp .env.example .env
-# Add GROQ API key
-```
+- Multiple professional themes
+- PDF export (print to PDF)
+- DOCX export (ATS-friendly for resumes)
+- Mobile-friendly downloads
+- Bookmarklet for quick capture
+- No signup, no tracking, free
 
-## Architecture
+## Related
 
-See `docs/` for:
-- `PRODUCT-CONTEXT.md` - Positioning, user journey, conversion points
-- `ROADMAP.md` - Feature phases (TODO)
-- `ARCHITECTURE.md` - Data flow, storage, auth (TODO)
+This repo also contains code for **resumecoach.co** (AI coaching product) - currently disabled via feature flags. The editor-only mode runs at prettify-ai.com.
 
-## Environments
+## License
 
-- **dev**: Local development
-- **staging**: Pre-production testing
-- **prod**: Live (not promoted yet)
-
-## Current State
-
-MVP with:
-- Chat-based coaching interface
-- Rich text editor with themes
-- PDF/DOCX export
-- LinkedIn import
-- Groq-powered AI (free)
-
-Next: LocalStorage persistence, chat-to-editor bridge.
+MIT
