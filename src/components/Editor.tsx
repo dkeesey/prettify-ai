@@ -10,7 +10,7 @@ import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/storage'
 import { features } from '@/lib/features'
 import { useReactToPrint } from 'react-to-print'
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, convertInchesToTwip } from 'docx'
-import { saveAs } from 'file-saver'
+// Note: file-saver removed - using custom downloadBlob for mobile compatibility
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -52,6 +52,54 @@ import {
   Bookmark,
   ClipboardPaste,
 } from 'lucide-react'
+
+// Mobile device detection for download handling
+function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+function isIOSSafari(): boolean {
+  if (typeof window === 'undefined') return false
+  const ua = navigator.userAgent
+  const isIOS = /iPad|iPhone|iPod/.test(ua)
+  const isWebkit = /WebKit/.test(ua)
+  const isNotChrome = !/CriOS/.test(ua)
+  return isIOS && isWebkit && isNotChrome
+}
+
+// Mobile-friendly download - opens in new tab on mobile, direct download on desktop
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob)
+
+  if (isMobileDevice()) {
+    const newWindow = window.open(url, '_blank')
+    if (!newWindow) {
+      // Popup blocked - fallback
+      if (isIOSSafari()) {
+        window.location.href = url
+      } else {
+        const link = document.createElement('a')
+        link.href = url
+        link.download = filename
+        link.target = '_blank'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
+  } else {
+    // Desktop - standard download
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+}
 
 // API calls now go through server-side /api/chat endpoint
 
@@ -792,7 +840,7 @@ export default function Editor() {
     })
 
     const blob = await Packer.toBlob(doc)
-    saveAs(blob, 'resume.docx')
+    downloadBlob(blob, 'resume.docx')
   }
 
   if (!editor) return null
