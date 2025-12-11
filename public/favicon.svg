@@ -1,9 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 128 128">
-    <path d="M50.4 78.5a75.1 75.1 0 0 0-28.5 6.9l24.2-65.7c.7-2 1.9-3.2 3.4-3.2h29c1.5 0 2.7 1.2 3.4 3.2l24.2 65.7s-11.6-7-28.5-7L67 45.5c-.4-1.7-1.6-2.8-2.9-2.8-1.3 0-2.5 1.1-2.9 2.7L50.4 78.5Zm-1.1 28.2Zm-4.2-20.2c-2 6.6-.6 15.8 4.2 20.2a17.5 17.5 0 0 1 .2-.7 5.5 5.5 0 0 1 5.7-4.5c2.8.1 4.3 1.5 4.7 4.7.2 1.1.2 2.3.2 3.5v.4c0 2.7.7 5.2 2.2 7.4a13 13 0 0 0 5.7 4.9v-.3l-.2-.3c-1.8-5.6-.5-9.5 4.4-12.8l1.5-1a73 73 0 0 0 3.2-2.2 16 16 0 0 0 6.8-11.4c.3-2 .1-4-.6-6l-.8.6-1.6 1a37 37 0 0 1-22.4 2.7c-5-.7-9.7-2-13.2-6.2Z" />
-    <style>
-        path { fill: #000; }
-        @media (prefers-color-scheme: dark) {
-            path { fill: #FFF; }
-        }
-    </style>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Ornate decorative P -->
+  <g fill="url(#grad)">
+    <!-- Main P stem with decorative serif base -->
+    <path d="M32 110 L32 24 Q32 18 38 18 L42 18 Q48 18 48 24 L48 110 Q48 116 42 116 L38 116 Q32 116 32 110 Z"/>
+    <!-- P bowl - elegant curve -->
+    <path d="M42 18 Q42 18 58 18 Q90 18 90 46 Q90 74 58 74 L48 74 L48 58 L58 58 Q72 58 72 46 Q72 34 58 34 L48 34 L48 18 Z"/>
+    <!-- Top flourish curl -->
+    <path d="M38 18 Q28 8 18 12 Q12 14 14 22 Q16 28 24 26 Q30 24 34 18 Z"/>
+    <!-- Bottom left flourish -->
+    <path d="M32 116 Q22 120 16 114 Q10 108 16 102 Q22 96 28 102 Q32 106 32 110 Z"/>
+    <!-- Decorative swirl from bowl -->
+    <path d="M90 46 Q98 46 102 38 Q106 28 98 22 Q92 18 88 24 Q86 28 90 34 Q94 40 90 46 Z"/>
+    <!-- Inner bowl decoration -->
+    <circle cx="70" cy="46" r="4"/>
+    <!-- Stem decorative elements -->
+    <circle cx="40" cy="90" r="3"/>
+    <path d="M28 70 Q22 70 22 64 Q22 58 28 58 Q34 58 34 64 Q34 70 28 70 Z"/>
+  </g>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      g { fill: #60a5fa; }
+    }
+  </style>
 </svg>
