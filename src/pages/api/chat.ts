@@ -10,6 +10,8 @@ const ALLOWED_ORIGINS = [
   'https://prettify-ai.com',
   'https://www.prettify-ai.com',
   'https://prettifyai.pages.dev',
+  'https://resumecoach.co',
+  'https://www.resumecoach.co',
   'http://localhost:4321',
   'http://localhost:3000',
 ];
