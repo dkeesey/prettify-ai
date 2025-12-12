@@ -1,16 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro'
 import CoachWithEditor from '../components/CoachWithEditor'
-import { getFeatureFlags } from '../lib/features'
-
-const flags = getFeatureFlags()
-
-// Redirect to editor if coach is disabled
-if (!flags.enableCoach) {
-  return Astro.redirect(flags.enableEditor ? '/editor' : '/')
-}
 ---
 
-<Layout title="Resume Coach | prettify-ai.com">
+<Layout title="Resume Coach | AI-Powered Resume Tailoring">
   <CoachWithEditor client:only="react" />
 </Layout>
