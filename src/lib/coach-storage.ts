@@ -9,6 +9,7 @@ export const COACH_STORAGE_KEYS = {
   JOB_DESCRIPTIONS: 'coach_job_descriptions',
   PROFILES: 'coach_profiles',
   MASTER_RESUME: 'coach_master_resume',
+  CHECKPOINTS: 'coach_checkpoints',
 } as const
 
 /**
@@ -33,6 +34,19 @@ export interface Profile {
   basedOnJD: string       // JobDescription.id
   resumeMarkdown: string
   createdAt: string
+}
+
+/**
+ * Checkpoint data model - snapshots of AI-generated resume states
+ * Created when user applies AI-generated resume to editor
+ */
+export interface Checkpoint {
+  id: string
+  label: string           // Auto-generated or user-provided label
+  editorContent: string   // HTML content in editor
+  resumeMarkdown: string  // Original markdown from AI
+  createdAt: string
+  iteration: number       // 1, 2, 3... for display ordering
 }
 
 /**
@@ -155,4 +169,79 @@ export function deleteProfile(id: string): boolean {
 
   setStoredValue(COACH_STORAGE_KEYS.PROFILES, filtered)
   return true
+}
+
+// ============ CHECKPOINTS ============
+
+/**
+ * Get all saved checkpoints, sorted by iteration (newest first)
+ */
+export function getCheckpoints(): Checkpoint[] {
+  const checkpoints = getStoredValue<Checkpoint[]>(COACH_STORAGE_KEYS.CHECKPOINTS, [])
+  return checkpoints.sort((a, b) => b.iteration - a.iteration)
+}
+
+/**
+ * Get a single checkpoint by ID
+ */
+export function getCheckpoint(id: string): Checkpoint | null {
+  const checkpoints = getCheckpoints()
+  return checkpoints.find(c => c.id === id) || null
+}
+
+/**
+ * Save a new checkpoint (created when AI resume is applied to editor)
+ */
+export function saveCheckpoint(checkpoint: Omit<Checkpoint, 'id' | 'createdAt' | 'iteration'>): Checkpoint {
+  const existing = getCheckpoints()
+  const nextIteration = existing.length > 0
+    ? Math.max(...existing.map(c => c.iteration)) + 1
+    : 1
+
+  const newCheckpoint: Checkpoint = {
+    ...checkpoint,
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+    iteration: nextIteration,
+  }
+
+  // Keep checkpoints in order (newest iteration number = most recent)
+  setStoredValue(COACH_STORAGE_KEYS.CHECKPOINTS, [...existing, newCheckpoint])
+
+  return newCheckpoint
+}
+
+/**
+ * Update checkpoint label
+ */
+export function updateCheckpointLabel(id: string, label: string): Checkpoint | null {
+  const checkpoints = getStoredValue<Checkpoint[]>(COACH_STORAGE_KEYS.CHECKPOINTS, [])
+  const index = checkpoints.findIndex(c => c.id === id)
+
+  if (index === -1) return null
+
+  checkpoints[index] = { ...checkpoints[index], label }
+  setStoredValue(COACH_STORAGE_KEYS.CHECKPOINTS, checkpoints)
+
+  return checkpoints[index]
+}
+
+/**
+ * Delete a checkpoint
+ */
+export function deleteCheckpoint(id: string): boolean {
+  const checkpoints = getStoredValue<Checkpoint[]>(COACH_STORAGE_KEYS.CHECKPOINTS, [])
+  const filtered = checkpoints.filter(c => c.id !== id)
+
+  if (filtered.length === checkpoints.length) return false
+
+  setStoredValue(COACH_STORAGE_KEYS.CHECKPOINTS, filtered)
+  return true
+}
+
+/**
+ * Clear all checkpoints
+ */
+export function clearCheckpoints(): void {
+  removeStoredValue(COACH_STORAGE_KEYS.CHECKPOINTS)
 }
