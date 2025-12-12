@@ -3,7 +3,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
-import { Pagination } from 'tiptap-pagination-breaks'
+// Pagination extension removed - was causing cursor position bugs
 import DOMPurify from 'dompurify'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { markdownToHtml } from '@/lib/markdown'
@@ -30,9 +30,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import {
   Bold,
   Italic,
@@ -41,15 +38,10 @@ import {
   ListOrdered,
   FileDown,
   FileText,
-  Type,
   Heading1,
   Heading2,
   Heading3,
-  Sparkles,
   Loader2,
-  Linkedin,
-  Wand2,
-  MessageCircle,
   Trash2,
   Save,
   Bookmark,
@@ -106,186 +98,6 @@ function downloadBlob(blob: Blob, filename: string): void {
   }
 }
 
-// API calls now go through server-side /api/chat endpoint
-
-// Resume writing styles
-const resumeStyles = {
-  metrics: {
-    name: 'Metrics-Driven',
-    description: 'Quantify achievements with numbers and percentages',
-    prompt: `Focus on quantifiable achievements. Use specific numbers, percentages, and metrics wherever possible.
-Example: "Increased revenue by 40%" or "Managed team of 12 engineers"`
-  },
-  narrative: {
-    name: 'Brand & Narrative',
-    description: 'Emphasize prestigious brands and pioneering context',
-    prompt: `Emphasize brand recognition and pioneering work. For older roles, acknowledge that the technological context was different.
-Example: "Built web presence for Goldman Sachs" or "Pioneered online graphics for ESPN before modern CMS tools existed"
-Don't force metrics - let prestigious company names and groundbreaking work speak for themselves.`
-  },
-  hybrid: {
-    name: 'Hybrid',
-    description: 'Metrics for recent roles, narrative for older ones',
-    prompt: `Use a hybrid approach:
-- For roles in the last 10 years: Include specific metrics and quantifiable achievements
-- For older roles: Emphasize brand recognition, pioneering context, and the significance of the work for its era
-Recognize that "getting something online" in 1998 was fundamentally different than today.`
-  },
-}
-
-type ResumeStyleKey = keyof typeof resumeStyles
-
-// Fun loading messages
-const loadingMessages = [
-  "Analyzing your experience...",
-  "Crafting compelling bullet points...",
-  "Making you sound impressive...",
-  "Quantifying your achievements...",
-  "Polishing the details...",
-  "Adding professional flair...",
-  "Almost there...",
-]
-
-async function parseLinkedInProfile(profileText: string, style: ResumeStyleKey): Promise<string> {
-  const styleInstructions = resumeStyles[style].prompt
-
-  const prompt = `Parse this LinkedIn profile text and convert it to a professional resume in markdown format.
-
-LinkedIn Profile Text:
-${profileText}
-
-WRITING STYLE:
-${styleInstructions}
-
-Extract and format into this EXACT markdown structure:
-# [Full Name]
-**[Current/Target Job Title]** | [Location] | [Email if found] | [Phone if found]
-
-## Summary
-[Write a 2-3 sentence professional summary based on their experience]
-
-## Experience
-### [Job Title]
-**[Company]** | [Start Date] - [End Date or Present]
-- [Achievement/responsibility 1]
-- [Achievement/responsibility 2]
-- [Achievement/responsibility 3]
-
-[Repeat for each job]
-
-## Skills
-[skill1], [skill2], [skill3], ...
-
-## Education
-### [Degree]
-**[School]** | [Year]
-
-Rules:
-- Extract ALL jobs listed
-- Apply the WRITING STYLE instructions when crafting bullet points
-- Keep it professional and concise
-- If information is missing, omit that section
-- Output ONLY the markdown, no explanations`
-
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 3000,
-      temperature: 0.5,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to parse LinkedIn profile')
-  }
-
-  const data = await response.json()
-  return data.choices[0]?.message?.content || ''
-}
-
-async function generateResume(formData: {
-  name: string
-  email: string
-  phone: string
-  location: string
-  jobTitle: string
-  experience: string
-  skills: string
-  education: string
-}, style: ResumeStyleKey): Promise<string> {
-  const styleInstructions = resumeStyles[style].prompt
-
-  const prompt = `Generate a professional resume in markdown format for:
-
-Name: ${formData.name}
-Email: ${formData.email}
-Phone: ${formData.phone}
-Location: ${formData.location}
-Target Job Title: ${formData.jobTitle}
-
-Experience/Background:
-${formData.experience}
-
-Skills: ${formData.skills}
-
-Education: ${formData.education}
-
-WRITING STYLE:
-${styleInstructions}
-
-Generate a complete, professional resume in markdown format with:
-- Name as H1
-- Contact info on one line after name
-- Summary section (2-3 sentences)
-- Experience section with bullet points - apply the WRITING STYLE above
-- Skills section
-- Education section
-
-Use this exact markdown format:
-# Name
-**Job Title** | Location | email | phone
-
-## Summary
-...
-
-## Experience
-### Job Title
-**Company** | Date - Date
-- Achievement 1
-- Achievement 2
-
-## Skills
-skill1, skill2, skill3
-
-## Education
-### Degree
-**School** | Year
-
-Output ONLY the markdown, no explanations.`
-
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2000,
-      temperature: 0.7,
-    }),
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to generate resume')
-  }
-
-  const data = await response.json()
-  return data.choices[0]?.message?.content || ''
-}
 
 const themes = {
   // Standard themes - full styling, great for PDF, styled DOCX
@@ -429,37 +241,17 @@ March 2018 – December 2020
 Graduated May 2018
 `
 
-export default function Editor() {
+interface EditorProps {
+  initialContent?: string
+  onContentChange?: (html: string) => void
+}
+
+export default function Editor({ initialContent, onContentChange }: EditorProps = {}) {
   // Initialize state from localStorage where applicable
   const [theme, setTheme] = useState<ThemeKey>(() =>
     getStoredValue(STORAGE_KEYS.THEME, 'professional') as ThemeKey
   )
-  const [resumeStyle, setResumeStyle] = useState<ResumeStyleKey>(() =>
-    getStoredValue(STORAGE_KEYS.RESUME_STYLE, 'hybrid') as ResumeStyleKey
-  )
   const [wordCount, setWordCount] = useState(0)
-  const [generateOpen, setGenerateOpen] = useState(false)
-  const [linkedInOpen, setLinkedInOpen] = useState(false)
-  const [linkedInData, setLinkedInData] = useState({
-    header: '',      // Name, headline, location
-    about: '',       // About/Summary section
-    experience: '',  // Work experience
-    education: '',   // Education
-    skills: '',      // Skills
-  })
-  const [generating, setGenerating] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [loadingMessage, setLoadingMessage] = useState(loadingMessages[0])
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    jobTitle: '',
-    experience: '',
-    skills: '',
-    education: '',
-  })
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle')
   const [bookmarkletOpen, setBookmarkletOpen] = useState(false)
   const [docxConfirmOpen, setDocxConfirmOpen] = useState(false)
@@ -490,11 +282,6 @@ export default function Editor() {
     setStoredValue(STORAGE_KEYS.THEME, theme)
   }, [theme])
 
-  // Save resume style preference when changed
-  useEffect(() => {
-    setStoredValue(STORAGE_KEYS.RESUME_STYLE, resumeStyle)
-  }, [resumeStyle])
-
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -512,17 +299,9 @@ export default function Editor() {
       Placeholder.configure({
         placeholder: 'Paste your markdown here, or click Sample to see an example...',
       }),
-      // Pagination extension for document-like page breaks
-      // US Letter: 8.5x11" with 1" margins = 6.5x9" content area
-      // At 96 DPI: pageWidth=624, pageHeight=864
-      // Note: We handle margins via CSS padding, so pageMargin=0 here
-      Pagination.configure({
-        pageHeight: 864,     // 9 inches content height at 96 DPI
-        pageWidth: 624,      // 6.5 inches content width at 96 DPI
-        pageMargin: 0,       // We handle margins via CSS
-        showPageNumber: true,
-        label: 'Page',
-      }),
+      // Pagination extension disabled - was causing cursor position bugs
+      // See: https://github.com/ueberdosis/tiptap/discussions/4960
+      // TODO: Re-evaluate pagination approach if page breaks are needed
     ],
     content: '',
     autofocus: 'end',
@@ -534,6 +313,8 @@ export default function Editor() {
       const html = editor.getHTML()
       if (html !== '<p></p>') {
         saveEditorContent(html)
+        // Notify parent of content change
+        onContentChange?.(html)
       }
     },
     editorProps: {
@@ -586,19 +367,21 @@ export default function Editor() {
     }
   }, [editor])
 
-  // Load content from URL parameter or localStorage on mount
+  // Load content from URL parameter, prop, or localStorage on mount
   useEffect(() => {
     if (!editor) return
+
+    const sanitizeOptions = {
+      ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'hr', 'br'],
+      ALLOWED_ATTR: ['href'],
+      ALLOW_DATA_ATTR: false,
+    }
+
     const params = new URLSearchParams(window.location.search)
     const urlContent = params.get('content')
 
     if (urlContent) {
-      // URL parameter takes priority - sanitize for consistency
-      const sanitizeOptions = {
-        ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'hr', 'br'],
-        ALLOWED_ATTR: ['href'],
-        ALLOW_DATA_ATTR: false,
-      }
+      // URL parameter takes priority
       try {
         const decoded = atob(urlContent)
         const html = markdownToHtml(decoded)
@@ -610,70 +393,39 @@ export default function Editor() {
         const sanitized = DOMPurify.sanitize(html, sanitizeOptions)
         editor.commands.setContent(sanitized)
       }
+    } else if (initialContent) {
+      // Prop takes second priority
+      const sanitized = DOMPurify.sanitize(initialContent, sanitizeOptions)
+      editor.commands.setContent(sanitized)
     } else {
-      // No URL param - try loading from localStorage
+      // No URL param or prop - try loading from localStorage
       const savedContent = getStoredValue<string | null>(STORAGE_KEYS.EDITOR_CONTENT, null)
       if (savedContent) {
-        // Sanitize localStorage content (could have been tampered with)
-        const sanitized = DOMPurify.sanitize(savedContent, {
-          ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'strong', 'em', 'a', 'ul', 'ol', 'li', 'hr', 'br'],
-          ALLOWED_ATTR: ['href'],
-          ALLOW_DATA_ATTR: false,
-        })
+        const sanitized = DOMPurify.sanitize(savedContent, sanitizeOptions)
         editor.commands.setContent(sanitized)
         setSaveStatus('saved')
       }
     }
-  }, [editor])
+  }, [editor, initialContent])
 
-  // Cycle through loading messages when generating
-  useEffect(() => {
-    if (!generating && !importing) return
-
-    let index = 0
-    const interval = setInterval(() => {
-      index = (index + 1) % loadingMessages.length
-      setLoadingMessage(loadingMessages[index])
-    }, 1500)
-
-    return () => clearInterval(interval)
-  }, [generating, importing])
-
-  // Calculate page count based on page breaks from the Pagination extension
-  // The extension inserts .page-break elements
+  // Estimate page count based on text length
   useEffect(() => {
     if (!editor) return
 
     const calculatePages = () => {
-      // Count page-break elements inserted by the Pagination extension
-      // If no page breaks, count as 1 page. Otherwise, pages = breaks + 1
-      const editorElement = document.querySelector('.ProseMirror')
-      if (editorElement) {
-        const pageBreaks = editorElement.querySelectorAll('.page-break').length
-        setPageCount(pageBreaks + 1)
-      } else {
-        // Fallback: estimate based on text length
-        const text = editor.getText()
-        const CHARS_PER_LINE = 65
-        const LINES_PER_PAGE = 42
-        const textLines = Math.ceil(text.length / CHARS_PER_LINE)
-        const pages = Math.max(1, Math.ceil(textLines / LINES_PER_PAGE))
-        setPageCount(pages)
-      }
-    }
-
-    // Calculate on content changes with slight delay for render
-    const debouncedCalculate = () => {
-      setTimeout(calculatePages, 100) // Slightly longer delay for pagination extension to render
+      const text = editor.getText()
+      const CHARS_PER_LINE = 65
+      const LINES_PER_PAGE = 42
+      const textLines = Math.ceil(text.length / CHARS_PER_LINE)
+      const pages = Math.max(1, Math.ceil(textLines / LINES_PER_PAGE))
+      setPageCount(pages)
     }
 
     calculatePages()
-
-    // Listen for editor updates
-    editor.on('update', debouncedCalculate)
+    editor.on('update', calculatePages)
 
     return () => {
-      editor.off('update', debouncedCalculate)
+      editor.off('update', calculatePages)
     }
   }, [editor])
 
@@ -681,33 +433,6 @@ export default function Editor() {
     // Auto-convert - one click to formatted result
     const html = markdownToHtml(sampleResume)
     editor?.commands.setContent(html)
-  }
-
-  const convertMarkdown = () => {
-    if (!editor) return
-
-    // If we have pending markdown (from sample or paste), use it directly
-    if (pendingMarkdown) {
-      const html = markdownToHtml(pendingMarkdown)
-      editor.commands.setContent(html)
-      setPendingMarkdown(null)
-      return
-    }
-
-    // Otherwise try to reconstruct from editor HTML
-    const html = editor.getHTML()
-    const text = editor.getText()
-    if (text.includes('#')) {
-      // Reconstruct markdown from HTML paragraphs
-      const textWithBreaks = html
-        .replace(/<p>/g, '')
-        .replace(/<\/p>/g, '\n\n')
-        .replace(/<br\s*\/?>/g, '\n')
-        .replace(/<[^>]+>/g, '')
-        .trim()
-      const converted = markdownToHtml(textWithBreaks)
-      editor.commands.setContent(converted)
-    }
   }
 
   const clearContent = () => {
@@ -718,61 +443,6 @@ export default function Editor() {
       localStorage.removeItem(STORAGE_KEYS.EDITOR_CONTENT)
     }
     setSaveStatus('idle')
-  }
-
-  const handleGenerate = async () => {
-    if (!editor) return
-    setGenerating(true)
-    try {
-      const markdown = await generateResume(formData, resumeStyle)
-      const html = markdownToHtml(markdown)
-      editor.commands.setContent(html)
-      setGenerateOpen(false)
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        location: '',
-        jobTitle: '',
-        experience: '',
-        skills: '',
-        education: '',
-      })
-    } catch (error) {
-      console.error('Failed to generate resume:', error)
-      alert('Failed to generate resume. Please try again.')
-    } finally {
-      setGenerating(false)
-    }
-  }
-
-  const handleLinkedInImport = async () => {
-    if (!editor) return
-    // Combine all sections into one text block for the AI
-    const combinedText = [
-      linkedInData.header && `=== HEADER ===\n${linkedInData.header}`,
-      linkedInData.about && `=== ABOUT ===\n${linkedInData.about}`,
-      linkedInData.experience && `=== EXPERIENCE ===\n${linkedInData.experience}`,
-      linkedInData.education && `=== EDUCATION ===\n${linkedInData.education}`,
-      linkedInData.skills && `=== SKILLS ===\n${linkedInData.skills}`,
-    ].filter(Boolean).join('\n\n')
-
-    if (!combinedText.trim()) return
-
-    setImporting(true)
-    try {
-      const markdown = await parseLinkedInProfile(combinedText, resumeStyle)
-      const html = markdownToHtml(markdown)
-      editor.commands.setContent(html)
-      setLinkedInOpen(false)
-      setLinkedInData({ header: '', about: '', experience: '', education: '', skills: '' })
-    } catch (error) {
-      console.error('Failed to parse LinkedIn profile:', error)
-      alert('Failed to parse LinkedIn profile. Please try again.')
-    } finally {
-      setImporting(false)
-    }
   }
 
   const handlePrint = useReactToPrint({
@@ -929,231 +599,49 @@ export default function Editor() {
           <a href="/" className="text-xl font-bold text-primary">prettify-ai.com</a>
           <p className="text-sm text-gray-500 hidden md:block">The bridge from LLM output to files you can use</p>
           <div className="flex items-center gap-2">
-            {features.coach && (
-              <Button variant="outline" size="sm" asChild>
-                <a href="/coach" className="flex items-center gap-1">
-                  <MessageCircle className="h-4 w-4" />
-                  AI Coach
-                </a>
-              </Button>
-            )}
-            {features.aiGenerate && (
-              <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="default" size="sm" className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
-                    <Sparkles className="h-4 w-4 mr-1" />
-                    Generate
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Bookmarklet in header */}
+            <Dialog open={bookmarkletOpen} onOpenChange={setBookmarkletOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-gray-500 hover:text-primary">
+                  <Bookmark className="h-4 w-4 mr-1" />
+                  Bookmarklet
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Generate Resume with AI</DialogTitle>
+                  <DialogTitle>Install Browser Bookmarklet</DialogTitle>
                   <DialogDescription>
-                    Fill in your details and we'll generate a professional resume for you. Powered by Llama 3.3 - 100% free.
+                    One-click tool to send text from ChatGPT, Claude, or any page directly here.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
-                      <Input
-                        id="name"
-                        placeholder="Jane Smith"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="jobTitle">Target Job Title *</Label>
-                      <Input
-                        id="jobTitle"
-                        placeholder="Senior Software Engineer"
-                        value={formData.jobTitle}
-                        onChange={(e) => setFormData({ ...formData, jobTitle: e.target.value })}
-                      />
-                    </div>
+                <div className="py-4 space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-900 mb-2">Installation:</p>
+                    <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
+                      <li>Show your browser's bookmark bar (Ctrl+Shift+B)</li>
+                      <li>Drag the button below to your bookmark bar</li>
+                      <li>Done! Click it anytime with text selected</li>
+                    </ol>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        placeholder="jane@email.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        placeholder="(555) 123-4567"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      />
-                    </div>
+                  <div className="flex justify-center">
+                    <a
+                      href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
+                      onClick={(e) => { e.preventDefault(); alert('Drag this button to your bookmark bar!'); }}
+                    >
+                      <Bookmark className="h-4 w-4" />
+                      Prettify It
+                    </a>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      placeholder="San Francisco, CA"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="experience">Work Experience *</Label>
-                    <Textarea
-                      id="experience"
-                      placeholder="Describe your work history. Include job titles, companies, dates, and key accomplishments. The AI will format it professionally."
-                      className="min-h-[120px]"
-                      value={formData.experience}
-                      onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="skills">Skills</Label>
-                    <Input
-                      id="skills"
-                      placeholder="React, TypeScript, Node.js, AWS, PostgreSQL"
-                      value={formData.skills}
-                      onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="education">Education</Label>
-                    <Input
-                      id="education"
-                      placeholder="B.S. Computer Science, MIT, 2018"
-                      value={formData.education}
-                      onChange={(e) => setFormData({ ...formData, education: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setGenerateOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={generating || !formData.name || !formData.jobTitle || !formData.experience}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600"
-                  >
-                    {generating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {loadingMessage}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-1" />
-                        Generate Resume
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-            )}
-            {features.linkedIn && (
-              <Dialog open={linkedInOpen} onOpenChange={setLinkedInOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="border-[#0A66C2] text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white">
-                    <Linkedin className="h-4 w-4 mr-1" />
-                    LinkedIn
-                  </Button>
-                </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-                <DialogHeader className="flex-shrink-0">
-                  <DialogTitle>Import from LinkedIn</DialogTitle>
-                  <DialogDescription>
-                    Copy each section from your LinkedIn profile. Only paste what you have - empty sections are fine.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex-1 overflow-y-auto space-y-4 py-4">
-                  <div className="bg-muted p-3 rounded-lg text-sm">
-                    <p className="text-muted-foreground">
-                      Go to your <a href="https://www.linkedin.com/in/me" target="_blank" rel="noopener noreferrer" className="text-[#0A66C2] underline">LinkedIn profile</a> and copy each section below. Click "Show all" to expand hidden items.
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm font-medium text-gray-700 mb-1">Usage:</p>
+                    <p className="text-xs text-gray-600">
+                      Select any text (ChatGPT output, docs, markdown), click the bookmarklet, and it opens here formatted and ready to export.
                     </p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Header (Name, Title, Location)</Label>
-                    <Textarea
-                      placeholder="Dean Keesey&#10;Senior Software Engineer&#10;San Francisco Bay Area"
-                      className="min-h-[60px] max-h-[100px] resize-none text-sm"
-                      value={linkedInData.header}
-                      onChange={(e) => setLinkedInData({ ...linkedInData, header: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">About</Label>
-                    <Textarea
-                      placeholder="Your summary/about section..."
-                      className="min-h-[60px] max-h-[120px] resize-none text-sm"
-                      value={linkedInData.about}
-                      onChange={(e) => setLinkedInData({ ...linkedInData, about: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Experience *</Label>
-                    <Textarea
-                      placeholder="Copy all your job titles, companies, dates, and descriptions..."
-                      className="min-h-[100px] max-h-[200px] resize-none text-sm"
-                      value={linkedInData.experience}
-                      onChange={(e) => setLinkedInData({ ...linkedInData, experience: e.target.value })}
-                    />
-                    <p className="text-xs text-muted-foreground">💡 Click "Show all experiences" on LinkedIn first</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Education</Label>
-                    <Textarea
-                      placeholder="Schools, degrees, dates..."
-                      className="min-h-[60px] max-h-[100px] resize-none text-sm"
-                      value={linkedInData.education}
-                      onChange={(e) => setLinkedInData({ ...linkedInData, education: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Skills</Label>
-                    <Textarea
-                      placeholder="Your skills list..."
-                      className="min-h-[60px] max-h-[100px] resize-none text-sm"
-                      value={linkedInData.skills}
-                      onChange={(e) => setLinkedInData({ ...linkedInData, skills: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="flex-shrink-0 flex justify-end gap-2 pt-4 border-t">
-                  <Button variant="outline" onClick={() => setLinkedInOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleLinkedInImport}
-                    disabled={importing || !linkedInData.experience.trim()}
-                    className="bg-[#0A66C2] hover:bg-[#004182]"
-                  >
-                    {importing ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {loadingMessage}
-                      </>
-                    ) : (
-                      <>
-                        <Linkedin className="h-4 w-4 mr-1" />
-                        Import Profile
-                      </>
-                    )}
-                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
-            )}
             <Button variant="ghost" size="sm" onClick={clearContent} title="Clear content">
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -1177,17 +665,15 @@ export default function Editor() {
           <div className="flex items-start gap-2 flex-shrink-0">
             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-300 text-gray-700 text-xs font-bold flex items-center justify-center mt-0.5">1</span>
             <div className="flex flex-col gap-0.5">
-              <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={loadSample}>
-                <FileText className="h-3 w-3 mr-1.5" />
-                Paste sample MD
-              </Button>
               <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={() => navigator.clipboard.readText().then(text => {
                 if (text) {
-                  // If it looks like markdown, store for Convert MD button
+                  // If it looks like markdown, auto-convert
                   if (text.includes('#') && text.includes('\n')) {
-                    setPendingMarkdown(text)
+                    const html = markdownToHtml(text)
+                    editor.commands.setContent(html)
+                  } else {
+                    editor.commands.setContent(text)
                   }
-                  editor.commands.setContent(text)
                 }
               }).catch(() => {
                 alert('Could not access clipboard. Please paste directly into the editor (Ctrl+V / Cmd+V).')
@@ -1195,48 +681,10 @@ export default function Editor() {
                 <ClipboardPaste className="h-3 w-3 mr-1.5" />
                 Paste clipboard
               </Button>
-              <Dialog open={bookmarkletOpen} onOpenChange={setBookmarkletOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-6 text-xs justify-start text-gray-400 hover:text-primary px-1">
-                    <Bookmark className="h-3 w-3 mr-1.5" />
-                    Bookmarklet...
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Install Browser Bookmarklet</DialogTitle>
-                    <DialogDescription>
-                      One-click tool to send text from ChatGPT, Claude, or any page directly here.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="py-4 space-y-4">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <p className="text-sm font-medium text-blue-900 mb-2">Installation:</p>
-                      <ol className="text-sm text-blue-800 list-decimal list-inside space-y-1">
-                        <li>Show your browser's bookmark bar (Ctrl+Shift+B)</li>
-                        <li>Drag the button below to your bookmark bar</li>
-                        <li>Done! Click it anytime with text selected</li>
-                      </ol>
-                    </div>
-                    <div className="flex justify-center">
-                      <a
-                        href="javascript:(function(){var s=window.getSelection().toString();if(!s){alert('Select some text first!');return;}window.open('https://prettify-ai.com/editor?content='+btoa(unescape(encodeURIComponent(s))),'_blank');})();"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 rounded border-2 border-dashed border-gray-300 hover:border-primary hover:bg-gray-50 cursor-move"
-                        onClick={(e) => { e.preventDefault(); alert('Drag this button to your bookmark bar!'); }}
-                      >
-                        <Bookmark className="h-4 w-4" />
-                        Prettify It
-                      </a>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-sm font-medium text-gray-700 mb-1">Usage:</p>
-                      <p className="text-xs text-gray-600">
-                        Select any text (ChatGPT output, docs, markdown), click the bookmarklet, and it opens here formatted and ready to export.
-                      </p>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={loadSample}>
+                <FileText className="h-3 w-3 mr-1.5" />
+                Paste sample MD
+              </Button>
             </div>
           </div>
 
@@ -1245,22 +693,9 @@ export default function Editor() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
 
-          {/* Step 2: Convert */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-300 text-gray-700 text-[10px] font-bold flex items-center justify-center">2</span>
-            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={convertMarkdown}>
-              Convert MD
-            </Button>
-          </div>
-
-          {/* Arrow */}
-          <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-
-          {/* Step 3: Theme - THE HERO */}
+          {/* Step 2: Theme - THE HERO */}
           <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2 py-1 border-2 border-primary shadow-sm flex-shrink-0">
-            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center shadow">3</span>
+            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center shadow">2</span>
             <span className="text-xs font-medium text-primary">Theme:</span>
             <Select value={theme} onValueChange={(v) => setTheme(v as ThemeKey)}>
               <SelectTrigger className="w-[130px] h-7 text-xs border-primary bg-white font-medium text-primary">
@@ -1296,40 +731,51 @@ export default function Editor() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
 
-          {/* Step 4: Export */}
+          {/* Step 3: Export - DOCX emphasized for ATS themes, PDF for styled themes */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-300 text-gray-700 text-[10px] font-bold flex items-center justify-center">4</span>
+            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gray-300 text-gray-700 text-[10px] font-bold flex items-center justify-center">3</span>
             {features.export && (
               <div className="flex items-center gap-1">
                 <Dialog open={docxConfirmOpen} onOpenChange={setDocxConfirmOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-7 text-xs">
+                    <Button
+                      variant={currentTheme.group === 'ats' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-7 text-xs"
+                    >
                       <FileDown className="h-3 w-3 mr-1" />
                       DOCX
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
                     <DialogHeader>
-                      <DialogTitle>Download ATS-Friendly DOCX</DialogTitle>
+                      <DialogTitle>Download DOCX</DialogTitle>
                       <DialogDescription>
-                        Optimized for Applicant Tracking Systems
+                        {currentTheme.group === 'ats'
+                          ? 'Ready for Applicant Tracking Systems'
+                          : 'Using styled theme formatting'}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 text-sm">
-                      <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                        <p className="text-amber-900">
-                          <strong>Note:</strong> The DOCX will look simpler than what you see on screen. This is intentional—ATS software can't read fancy formatting.
-                        </p>
-                      </div>
-                      <p className="font-medium">DOCX format includes:</p>
-                      <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                        <li>Plain Arial font, 11pt</li>
-                        <li>Simple heading hierarchy</li>
-                        <li>Standard bullet points</li>
-                        <li>No colors or decorative lines</li>
-                      </ul>
+                      {currentTheme.group !== 'ats' && (
+                        <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <p className="text-amber-900 mb-2">
+                            <strong>Submitting to an ATS?</strong> Select an <strong>ATS-Friendly</strong> theme first.
+                          </p>
+                          <p className="text-amber-800 text-xs">
+                            ATS parsers can choke on: colored text, decorative lines, unusual fonts, tables, columns, headers/footers, and text boxes. Our ATS themes use plain black text with standard fonts.
+                          </p>
+                        </div>
+                      )}
+                      {currentTheme.group === 'ats' && (
+                        <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                          <p className="text-green-900">
+                            <strong>ATS-Ready:</strong> Your {currentTheme.name} theme uses plain black text with {currentTheme.docxFont} font—optimized for applicant tracking systems.
+                          </p>
+                        </div>
+                      )}
                       <p className="text-muted-foreground text-xs">
-                        Want the styled version? Use <strong>PDF</strong> for emailing directly to humans.
+                        Emailing directly to a human? Use <strong>PDF</strong> to preserve your styled formatting.
                       </p>
                     </div>
                     <div className="flex justify-end gap-2 pt-2">
@@ -1343,7 +789,12 @@ export default function Editor() {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button variant="default" size="sm" className="h-7 text-xs" onClick={() => handlePrint()}>
+                <Button
+                  variant={currentTheme.group === 'ats' ? 'outline' : 'default'}
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => handlePrint()}
+                >
                   <FileDown className="h-3 w-3 mr-1" />
                   PDF
                 </Button>
@@ -1427,24 +878,6 @@ export default function Editor() {
             </Button>
           </div>
 
-          {/* Resume style selector - only show when AI features enabled */}
-          {features.aiGenerate && (
-            <div className="flex items-center gap-2 ml-4">
-              <Label className="text-sm text-muted-foreground whitespace-nowrap">Writing Style</Label>
-              <Select value={resumeStyle} onValueChange={(v) => setResumeStyle(v as ResumeStyleKey)}>
-                <SelectTrigger className="w-[150px] h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(resumeStyles).map(([key, s]) => (
-                    <SelectItem key={key} value={key}>
-                      <span>{s.name}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* Zoom controls, word count, page count, and save status */}
           <div className="ml-auto flex items-center gap-3 text-xs text-gray-400">
@@ -1551,60 +984,24 @@ export default function Editor() {
             text-decoration: underline;
             transition: all 0.3s ease-in-out;
           }
-          /* Page break styling from tiptap-pagination-breaks */
-          .page-break {
-            height: 24px;
-            width: 100%;
-            border-top: 2px dashed #cbd5e1;
-            margin: 16px 0;
-            position: relative;
-          }
-          .page-break::after {
-            content: 'Page break';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 0 8px;
-            font-size: 10px;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-          }
           @media print {
             .resume-content, .resume-content * {
               transition: none !important;
             }
-            /* Hide all pagination visuals in print */
-            .page-indicator,
-            .page-break,
-            .page-break::before,
-            .page-break::after,
-            [class*="page-break"],
-            [class*="pagination"] {
-              display: none !important;
-              visibility: hidden !important;
-              height: 0 !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              border: none !important;
-            }
           }
-          /* Force proper page margins for PDF export - Chrome's print dialog controls are unreliable */
+          /* Force proper page margins for PDF export */
           @page {
             size: letter;
             margin: 1in;
           }
           @media print {
-            /* Remove content padding since @page handles margins */
             .resume-content {
               padding: 0 !important;
             }
           }
         `}</style>
 
-        {/* Single paper-like container - Pagination extension handles page breaks */}
+        {/* Single paper-like container */}
         <div
           className="bg-white shadow-2xl relative mx-auto origin-top"
           style={{

@@ -10,10 +10,17 @@ import {
   FileDown,
   ArrowRight,
   RotateCcw,
+  FileText,
+  MessageCircle,
+  PanelLeftClose,
+  PanelLeft,
 } from 'lucide-react'
 import { extractResumeFromResponse } from '@/lib/markdown'
 import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/storage'
 import { features } from '@/lib/features'
+import JobDescriptionInput from './JobDescriptionInput'
+import JobDescriptionDetail from './JobDescriptionDetail'
+import { type JobDescription } from '@/lib/coach-storage'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -73,6 +80,8 @@ const WELCOME_MESSAGE = `Hey! I'm your resume coach. I help people tell their ca
 
 What kind of role are you targeting, and what's your current situation? (Job searching, career change, getting back into work, etc.)`
 
+type SidebarTab = 'jds' | 'chat'
+
 export default function ChatCoach() {
   // Initialize from localStorage or defaults
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -86,6 +95,11 @@ export default function ChatCoach() {
   )
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('jds')
+  const [selectedJD, setSelectedJD] = useState<JobDescription | null>(null)
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -216,144 +230,234 @@ export default function ChatCoach() {
     window.location.href = `/editor?content=${encoded}`
   }
 
+  // Handler for when a JD is selected
+  const handleSelectJD = (jd: JobDescription | null) => {
+    setSelectedJD(jd)
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div
+        className={`${
+          sidebarOpen ? 'w-80' : 'w-0'
+        } flex-shrink-0 border-r bg-white transition-all duration-300 overflow-hidden flex flex-col`}
+      >
+        {/* Sidebar Tabs */}
+        <div className="flex border-b">
+          <button
+            onClick={() => setSidebarTab('jds')}
+            className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              sidebarTab === 'jds'
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            JDs
+          </button>
+          <button
+            onClick={() => setSidebarTab('chat')}
+            className={`flex-1 px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${
+              sidebarTab === 'chat'
+                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Chat
+          </button>
+        </div>
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-hidden">
+          {sidebarTab === 'jds' && (
+            <JobDescriptionInput
+              onSelectJD={handleSelectJD}
+              selectedJDId={selectedJD?.id}
+            />
+          )}
+          {sidebarTab === 'chat' && (
+            <div className="p-4 text-sm text-gray-500">
+              <p className="mb-4">Chat history and quick actions coming soon.</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={startNewConversation}
+                className="w-full"
+              >
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Start New Chat
+              </Button>
             </div>
-            <div>
-              <h1 className="font-semibold text-gray-900">Resume Coach</h1>
-              <p className="text-sm text-gray-500">Let's tell your story</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {messages.length > 1 && (
+          )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="bg-white border-b px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={startNewConversation}
-                className="text-muted-foreground hover:text-foreground"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="p-2"
               >
-                <RotateCcw className="h-4 w-4 mr-1" />
-                Start New
+                {sidebarOpen ? (
+                  <PanelLeftClose className="h-5 w-5" />
+                ) : (
+                  <PanelLeft className="h-5 w-5" />
+                )}
               </Button>
-            )}
-            {features.editor && (
-              <Button variant="outline" size="sm" asChild>
-                <a href="/editor">Paste MD</a>
-              </Button>
-            )}
-            {features.editor && generatedResume && (
-              <Button onClick={openInEditor} className="gap-2">
-                Open in Editor
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            )}
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="font-semibold text-gray-900">Resume Coach</h1>
+                <p className="text-sm text-gray-500">Let's tell your story</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {features.editor && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href="/editor">Paste MD</a>
+                </Button>
+              )}
+              {features.editor && generatedResume && (
+                <Button onClick={openInEditor} className="gap-2">
+                  Open in Editor
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6">
-        <div className="max-w-3xl mx-auto space-y-6">
-          {messages.map((message, i) => (
-            <div
-              key={i}
-              className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
-            >
-              {message.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-4 w-4 text-white" />
-                </div>
-              )}
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white border shadow-sm'
-                }`}
+        {/* Content Area - Either JD Detail or Chat */}
+        {selectedJD ? (
+          // Show JD Detail when a JD is selected
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              <JobDescriptionDetail jd={selectedJD} />
+            </div>
+            {/* Back to chat button */}
+            <div className="bg-white border-t px-4 py-3">
+              <Button
+                variant="outline"
+                onClick={() => setSelectedJD(null)}
+                className="w-full"
               >
-                <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {message.content}
-                </div>
-              </div>
-              {message.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4 text-gray-600" />
-                </div>
-              )}
-            </div>
-          ))}
-
-          {isLoading && messages[messages.length - 1]?.content === '' && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Bot className="h-4 w-4 text-white" />
-              </div>
-              <div className="bg-white border shadow-sm rounded-2xl px-4 py-3">
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Thinking...</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Resume Preview Banner */}
-      {generatedResume && (
-        <div className="bg-green-50 border-t border-green-200 px-4 py-3">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2 text-green-700">
-              <FileDown className="h-5 w-5" />
-              <span className="font-medium">Resume generated!</span>
-            </div>
-            {features.editor && (
-              <Button onClick={openInEditor} variant="outline" size="sm" className="gap-2">
-                Edit & Export
-                <ArrowRight className="h-4 w-4" />
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Back to Chat
               </Button>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          // Show Chat when no JD is selected
+          <>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-4 py-6">
+              <div className="max-w-3xl mx-auto space-y-6">
+                {messages.map((message, i) => (
+                  <div
+                    key={i}
+                    className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
+                  >
+                    {message.role === 'assistant' && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white border shadow-sm'
+                      }`}
+                    >
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {message.content}
+                      </div>
+                    </div>
+                    {message.role === 'user' && (
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 text-gray-600" />
+                      </div>
+                    )}
+                  </div>
+                ))}
 
-      {/* Input */}
-      <div className="bg-white border-t px-4 py-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex gap-3">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Tell me about yourself..."
-              className="min-h-[52px] max-h-[200px] resize-none"
-              disabled={isLoading}
-            />
-            <Button
-              onClick={sendMessage}
-              disabled={!input.trim() || isLoading}
-              className="h-[52px] w-[52px] p-0"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
-          <p className="text-xs text-gray-400 mt-2 text-center">
-            Press Enter to send, Shift+Enter for new line
-          </p>
-        </div>
+                {isLoading && messages[messages.length - 1]?.content === '' && (
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-white" />
+                    </div>
+                    <div className="bg-white border shadow-sm rounded-2xl px-4 py-3">
+                      <div className="flex items-center gap-2 text-gray-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-sm">Thinking...</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            {/* Resume Preview Banner */}
+            {generatedResume && (
+              <div className="bg-green-50 border-t border-green-200 px-4 py-3">
+                <div className="max-w-3xl mx-auto flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-green-700">
+                    <FileDown className="h-5 w-5" />
+                    <span className="font-medium">Resume generated!</span>
+                  </div>
+                  {features.editor && (
+                    <Button onClick={openInEditor} variant="outline" size="sm" className="gap-2">
+                      Edit & Export
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Input */}
+            <div className="bg-white border-t px-4 py-4">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex gap-3">
+                  <Textarea
+                    ref={textareaRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Tell me about yourself..."
+                    className="min-h-[52px] max-h-[200px] resize-none"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!input.trim() || isLoading}
+                    className="h-[52px] w-[52px] p-0"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2 text-center">
+                  Press Enter to send, Shift+Enter for new line
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

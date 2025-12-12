@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro'
-import ChatCoach from '../components/ChatCoach'
+import CoachWithEditor from '../components/CoachWithEditor'
 import { getFeatureFlags } from '../lib/features'
 
 const flags = getFeatureFlags()
@@ -12,5 +12,5 @@ if (!flags.enableCoach) {
 ---
 
 <Layout title="Resume Coach | prettify-ai.com">
-  <ChatCoach client:only="react" />
+  <CoachWithEditor client:only="react" />
 </Layout>

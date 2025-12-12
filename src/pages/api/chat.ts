@@ -21,7 +21,7 @@ function getCorsOrigin(request: Request): string {
   return ALLOWED_ORIGINS[0];
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const corsOrigin = getCorsOrigin(request);
 
   // CORS headers
@@ -67,7 +67,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Get API key from environment (server-side only)
-    const GROQ_API_KEY = import.meta.env.GROQ_API_KEY;
+    // Cloudflare runtime: locals.runtime.env, fallback to import.meta.env for other adapters
+    const runtime = (locals as any).runtime;
+    const GROQ_API_KEY =
+      runtime?.env?.GROQ_API_KEY ||
+      import.meta.env.GROQ_API_KEY;
 
     if (!GROQ_API_KEY) {
       console.error('GROQ_API_KEY not configured');
