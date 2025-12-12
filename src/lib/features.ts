@@ -30,14 +30,41 @@ export interface FeatureFlags {
 }
 
 /**
- * Get deployment mode from environment
+ * Get deployment mode from domain or environment
+ * Domain takes precedence for multi-domain deployments
  */
 function getDeploymentMode(): DeploymentMode {
+  // Check domain first (works in browser)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+
+    // resumecoach.co → full coach experience
+    if (hostname === 'resumecoach.co' || hostname.endsWith('.resumecoach.co')) {
+      return 'full'
+    }
+
+    // prettify-ai.com → landing page with editor
+    if (hostname === 'prettify-ai.com' || hostname.endsWith('.prettify-ai.com')) {
+      return 'landing'
+    }
+
+    // localhost → full for development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      // Allow env override for local dev, default to full
+      const envMode = import.meta.env.PUBLIC_DEPLOYMENT_MODE
+      if (envMode === 'editor-only' || envMode === 'coach-only' || envMode === 'full' || envMode === 'landing') {
+        return envMode
+      }
+      return 'full'
+    }
+  }
+
+  // Fallback to env var (for SSR or unknown domains)
   const envMode = import.meta.env.PUBLIC_DEPLOYMENT_MODE
   if (envMode === 'editor-only' || envMode === 'coach-only' || envMode === 'full' || envMode === 'landing') {
     return envMode
   }
-  return 'landing' // Default for prettify-ai.com - shows landing page with editor only
+  return 'landing' // Default
 }
 
 /**
