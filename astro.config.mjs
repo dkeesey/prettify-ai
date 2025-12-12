@@ -11,6 +11,14 @@ export default defineConfig({
   integrations: [react()],
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    resolve: {
+      // Fix React 19 + Cloudflare Workers MessageChannel error
+      // Use react-dom/server.edge instead of react-dom/server.browser
+      // See: https://github.com/withastro/astro/issues/12824
+      alias: import.meta.env.PROD && {
+        'react-dom/server': 'react-dom/server.edge',
+      },
+    },
   }
 });
