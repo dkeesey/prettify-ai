@@ -72,15 +72,12 @@ Degree, School, Year
 
 Output the resume inside a code block with \`\`\`markdown at the start.`
 
-const WELCOME_MESSAGE = `Hey! I help you rethink your resume - not just format it, but figure out what story to tell.
+const WELCOME_MESSAGE = `Prettify AI handles formatting and export. I help you tell your story.
 
-Most people start by pasting:
-1. A job description they're applying for
-2. Their current resume (even if it's outdated or a mess)
+• Show me the job description you're applying for.
+• Paste in whatever you have for a previous resume or LinkedIn profile.
 
-We'll work through what the job actually values, how your experience maps to it, and what angle makes you stand out. Then I'll generate a tailored version.
-
-What do you have?`
+We can work together to update your resume in 5 minutes.`
 
 export default function CoachWithEditor() {
   const [messages, setMessages] = useState<Message[]>(() => {
@@ -248,7 +245,7 @@ export default function CoachWithEditor() {
             </div>
             <div>
               <h1 className="font-semibold text-gray-900">Resume Coach</h1>
-              <p className="text-sm text-gray-500">Find your angle</p>
+              <p className="text-sm text-gray-500">I can help you tell your story</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={startNewConversation}>
@@ -330,7 +327,7 @@ export default function CoachWithEditor() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Paste job description, resume, or LinkedIn sections..."
+              placeholder="Paste a job description or your current resume..."
               className="min-h-[52px] max-h-[200px] resize-none"
               disabled={isLoading}
             />

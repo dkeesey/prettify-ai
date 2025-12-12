@@ -261,7 +261,7 @@ export default function Editor({ initialContent, onContentChange }: EditorProps 
   const printRef = useRef<HTMLDivElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const currentTheme = themes[theme]
+  const currentTheme = themes[theme] || themes.professional
 
   // Debounced save function for editor content
   const saveEditorContent = useCallback((html: string) => {
@@ -458,7 +458,7 @@ export default function Editor({ initialContent, onContentChange }: EditorProps 
 
     // Typography constants derived from theme
     // DOCX uses half-points for font size, twips for spacing (20 twips = 1pt)
-    const currentTheme = themes[theme]
+    const currentTheme = themes[theme] || themes.professional
     const FONT_NAME = currentTheme.docxFont
     // Parse theme fontSize (e.g., "11pt" -> 22 half-points)
     const baseFontPt = parseInt(currentTheme.fontSize) || 11
