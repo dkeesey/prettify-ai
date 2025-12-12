@@ -1,20 +1,42 @@
 ---
 import Layout from '../layouts/Layout.astro'
-import { getFeatureFlags } from '../lib/features'
+import CoachWithEditor from '../components/CoachWithEditor'
 
-const flags = getFeatureFlags()
-const mode = flags.mode
+// Server-side domain detection
+const host = Astro.request.headers.get('host') || ''
 
-// Redirect only for single-feature modes
+// Determine mode based on domain
+let mode: 'landing' | 'full' | 'editor-only' | 'coach-only' = 'landing'
+
+if (host.includes('resumecoach.co')) {
+  mode = 'full' // Coach + Editor on resumecoach.co
+} else if (host.includes('prettify-ai.com')) {
+  mode = 'landing' // Landing page on prettify-ai.com
+} else if (host.includes('localhost') || host.includes('127.0.0.1')) {
+  // Local dev: check env var, default to full
+  const envMode = import.meta.env.PUBLIC_DEPLOYMENT_MODE
+  mode = (envMode === 'landing' || envMode === 'editor-only' || envMode === 'coach-only' || envMode === 'full')
+    ? envMode
+    : 'full'
+}
+
+// Redirect for single-feature modes
 if (mode === 'editor-only') {
   return Astro.redirect('/editor')
 }
 if (mode === 'coach-only') {
   return Astro.redirect('/coach')
 }
+
+// Show Coach interface for 'full' mode
+const showCoach = mode === 'full'
 ---
 
-<Layout title="Prettify AI - Convert LLM Markdown to Professional DOCX & PDF">
+<Layout title={showCoach ? "Resume Coach | AI-Powered Resume Tailoring" : "Prettify AI - Convert LLM Markdown to Professional DOCX & PDF"}>
+  {showCoach ? (
+    <!-- Coach Mode: Full coach interface -->
+    <CoachWithEditor client:only="react" />
+  ) : (
   <div class="min-h-screen flex flex-col bg-gray-50">
     <!-- Minimal Header -->
     <header class="bg-white border-b">
@@ -178,4 +200,5 @@ if (mode === 'coach-only') {
       </div>
     </footer>
   </div>
+  )}
 </Layout>
