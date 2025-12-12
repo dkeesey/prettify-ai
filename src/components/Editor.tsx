@@ -3,19 +3,22 @@ import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import { Pagination } from 'tiptap-pagination-breaks'
 import DOMPurify from 'dompurify'
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { markdownToHtml } from '@/lib/markdown'
 import { getStoredValue, setStoredValue, STORAGE_KEYS } from '@/lib/storage'
 import { features } from '@/lib/features'
 import { useReactToPrint } from 'react-to-print'
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, convertInchesToTwip } from 'docx'
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, convertInchesToTwip, BorderStyle } from 'docx'
 // Note: file-saver removed - using custom downloadBlob for mobile compatibility
 import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -51,6 +54,8 @@ import {
   Save,
   Bookmark,
   ClipboardPaste,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react'
 
 // Mobile device detection for download handling
@@ -283,21 +288,23 @@ Output ONLY the markdown, no explanations.`
 }
 
 const themes = {
-  // Sans-serif themes (Arial/Helvetica family)
+  // Standard themes - full styling, great for PDF, styled DOCX
   professional: {
     name: 'Professional',
+    group: 'standard',
     fontFamily: 'Arial, Helvetica, sans-serif',
     headingFont: 'Arial, Helvetica, sans-serif',
-    exportFont: 'Arial, Helvetica, sans-serif', // Universal font for PDF/DOCX
+    exportFont: 'Arial, Helvetica, sans-serif',
     docxFont: 'Arial',
     fontSize: '11pt',
     lineHeight: '1.5',
     color: '#1a1a1a',
     headingColor: '#2563eb',
-    decorative: true, // Show underlines on H2
+    decorative: true,
   },
   modern: {
     name: 'Modern',
+    group: 'standard',
     fontFamily: 'Arial, Helvetica, sans-serif',
     headingFont: 'Arial, Helvetica, sans-serif',
     exportFont: 'Arial, Helvetica, sans-serif',
@@ -308,21 +315,9 @@ const themes = {
     headingColor: '#111827',
     decorative: true,
   },
-  minimal: {
-    name: 'ATS Minimal',
-    fontFamily: 'Arial, Helvetica, sans-serif',
-    headingFont: 'Arial, Helvetica, sans-serif',
-    exportFont: 'Arial, Helvetica, sans-serif',
-    docxFont: 'Arial',
-    fontSize: '11pt',
-    lineHeight: '1.5',
-    color: '#000000',
-    headingColor: '#000000',
-    decorative: false, // No decorative elements - pure ATS
-  },
-  // Serif themes (Times New Roman family)
   classic: {
     name: 'Classic',
+    group: 'standard',
     fontFamily: '"Times New Roman", Times, serif',
     headingFont: '"Times New Roman", Times, serif',
     exportFont: '"Times New Roman", Times, serif',
@@ -333,8 +328,36 @@ const themes = {
     headingColor: '#2563eb',
     decorative: true,
   },
-  traditional: {
-    name: 'Traditional',
+  elegant: {
+    name: 'Elegant',
+    group: 'standard',
+    fontFamily: 'Georgia, "Times New Roman", serif',
+    headingFont: 'Georgia, "Times New Roman", serif',
+    exportFont: '"Times New Roman", Times, serif',
+    docxFont: 'Times New Roman',
+    fontSize: '11pt',
+    lineHeight: '1.6',
+    color: '#2d2d2d',
+    headingColor: '#1e40af',
+    decorative: true,
+  },
+  // ATS-Friendly themes - plain black, no decorations, optimized for applicant tracking systems
+  'ats-sans': {
+    name: 'ATS Sans',
+    group: 'ats',
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    headingFont: 'Arial, Helvetica, sans-serif',
+    exportFont: 'Arial, Helvetica, sans-serif',
+    docxFont: 'Arial',
+    fontSize: '11pt',
+    lineHeight: '1.5',
+    color: '#000000',
+    headingColor: '#000000',
+    decorative: false,
+  },
+  'ats-serif': {
+    name: 'ATS Serif',
+    group: 'ats',
     fontFamily: '"Times New Roman", Times, serif',
     headingFont: '"Times New Roman", Times, serif',
     exportFont: '"Times New Roman", Times, serif',
@@ -343,57 +366,67 @@ const themes = {
     lineHeight: '1.5',
     color: '#000000',
     headingColor: '#000000',
-    decorative: false, // Plain traditional look
-  },
-  elegant: {
-    name: 'Elegant',
-    fontFamily: 'Georgia, "Times New Roman", serif',
-    headingFont: 'Georgia, "Times New Roman", serif',
-    exportFont: '"Times New Roman", Times, serif', // Use Times for export compatibility
-    docxFont: 'Times New Roman',
-    fontSize: '11pt',
-    lineHeight: '1.6',
-    color: '#2d2d2d',
-    headingColor: '#1e40af',
-    decorative: true,
+    decorative: false,
   },
 }
 
 type ThemeKey = keyof typeof themes
 
-// Sample resume content for demo
+// Sample resume content for demo - follows proven structure from docs/resume-best-practices.md
 const sampleResume = `# Jane Smith
 
-**Senior Software Engineer** | San Francisco, CA | jane@email.com | (555) 123-4567
+**Senior Software Engineer** | San Francisco, CA | jane@email.com | (555) 123-4567 | linkedin.com/in/janesmith
 
-## Summary
+## Professional Summary
 
-Experienced software engineer with 8+ years building scalable web applications. Expert in React, TypeScript, and Node.js. Passionate about clean code and mentoring junior developers.
-
-## Experience
-
-### Senior Software Engineer
-**Acme Tech** | Jan 2021 - Present
-
-- Led development of customer-facing dashboard serving 50K+ daily users
-- Reduced page load time by 40% through code splitting and lazy loading
-- Mentored team of 4 junior developers, conducting weekly code reviews
-
-### Software Engineer
-**StartupCo** | Mar 2018 - Dec 2020
-
-- Built REST API handling 1M+ requests daily using Node.js and PostgreSQL
-- Implemented CI/CD pipeline reducing deployment time from 2 hours to 15 minutes
-- Collaborated with design team to create component library used across 5 products
-
-## Education
-
-### B.S. Computer Science
-**University of California, Berkeley** | 2014 - 2018
+Results-driven software engineer with 8+ years of experience building scalable web applications that serve millions of users. Proven track record of reducing costs by 40% and improving system performance through technical leadership. Seeking to leverage full-stack expertise and team mentorship skills to drive engineering excellence at a growth-stage company.
 
 ## Skills
 
-JavaScript, TypeScript, React, Node.js, PostgreSQL, AWS, Docker, Git
+**Languages:** JavaScript, TypeScript, Python, SQL
+
+**Frameworks:** React, Node.js, Next.js, Express
+
+**Infrastructure:** AWS, Docker, Kubernetes, PostgreSQL, Redis
+
+**Practices:** CI/CD, Test-Driven Development, Agile, Code Review
+
+## Certifications
+
+- AWS Solutions Architect Associate — Amazon Web Services, 2023
+- Professional Scrum Master I — Scrum.org, 2022
+
+## Professional Experience
+
+### Senior Software Engineer
+**Acme Tech** — San Francisco, CA
+January 2021 – Present
+
+- Led development of customer-facing dashboard serving 50K+ daily active users
+- Reduced infrastructure costs by 40% through implementing caching and query optimization
+- Decreased page load time from 4s to 1.2s through code splitting and lazy loading
+- Mentored team of 4 junior developers through weekly code reviews and pair programming
+- Architected migration from monolith to microservices, improving deployment frequency by 300%
+
+### Software Engineer
+**StartupCo** — San Francisco, CA
+March 2018 – December 2020
+
+- Built REST API handling 1M+ requests daily with 99.9% uptime using Node.js and PostgreSQL
+- Implemented CI/CD pipeline reducing deployment time from 2 hours to 15 minutes
+- Created shared component library adopted across 5 product teams, reducing UI development time by 25%
+- Collaborated with design and product teams to ship 3 major features ahead of schedule
+
+## Projects
+
+### Open Source Contribution — React Performance Toolkit
+- Developed profiling tools used by 2,000+ developers monthly
+- Reduced bundle analysis time by 60% through parallel processing
+
+## Education
+
+**B.S. Computer Science** — University of California, Berkeley
+Graduated May 2018
 `
 
 export default function Editor() {
@@ -431,6 +464,8 @@ export default function Editor() {
   const [bookmarkletOpen, setBookmarkletOpen] = useState(false)
   const [docxConfirmOpen, setDocxConfirmOpen] = useState(false)
   const [pageCount, setPageCount] = useState(1)
+  const [zoom, setZoom] = useState<50 | 75 | 100>(100)
+  const [pendingMarkdown, setPendingMarkdown] = useState<string | null>(null)
   const printRef = useRef<HTMLDivElement>(null)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -466,6 +501,9 @@ export default function Editor() {
         heading: {
           levels: [1, 2, 3],
         },
+        // Disable Link and Underline from StarterKit - we configure them separately
+        link: false,
+        underline: false,
       }),
       Underline,
       Link.configure({
@@ -473,6 +511,17 @@ export default function Editor() {
       }),
       Placeholder.configure({
         placeholder: 'Paste your markdown here, or click Sample to see an example...',
+      }),
+      // Pagination extension for document-like page breaks
+      // US Letter: 8.5x11" with 1" margins = 6.5x9" content area
+      // At 96 DPI: pageWidth=624, pageHeight=864
+      // Note: We handle margins via CSS padding, so pageMargin=0 here
+      Pagination.configure({
+        pageHeight: 864,     // 9 inches content height at 96 DPI
+        pageWidth: 624,      // 6.5 inches content width at 96 DPI
+        pageMargin: 0,       // We handle margins via CSS
+        showPageNumber: true,
+        label: 'Page',
       }),
     ],
     content: '',
@@ -489,7 +538,8 @@ export default function Editor() {
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[600px] p-8',
+        // Note: No padding here - margins handled by container CSS
+        class: 'prose prose-sm max-w-none focus:outline-none min-h-[600px]',
       },
     },
   })
@@ -589,70 +639,80 @@ export default function Editor() {
     return () => clearInterval(interval)
   }, [generating, importing])
 
-  // Calculate page count based on line count (typography-based)
-  // US Letter with 1" margins = 6.5" x 9" content area
-  // At 11pt font with 1.5 line height: ~40-42 lines per page
-  const LINES_PER_PAGE = 42
-
+  // Calculate page count based on page breaks from the Pagination extension
+  // The extension inserts .page-break elements
   useEffect(() => {
     if (!editor) return
 
     const calculatePages = () => {
-      // Get text content and count lines
-      const text = editor.getText()
-      const html = editor.getHTML()
-
-      // Count actual line breaks in content
-      // Each paragraph, heading, and list item counts as at least one line
-      const paragraphs = (html.match(/<p>/g) || []).length
-      const headings = (html.match(/<h[1-3]/g) || []).length
-      const listItems = (html.match(/<li>/g) || []).length
-
-      // H1 takes ~2 lines, H2 takes ~1.5 lines due to margins
-      const headingLines = headings * 1.5
-
-      // Estimate wrapped lines based on character count
-      // ~65 chars per line at 11pt on 6.5" width (1" margins)
-      const CHARS_PER_LINE = 65
-      const textLines = Math.ceil(text.length / CHARS_PER_LINE)
-
-      // Total estimated lines (paragraphs add spacing)
-      const totalLines = Math.max(
-        textLines + headingLines + (paragraphs * 0.5),
-        paragraphs + headings + listItems
-      )
-
-      const pages = Math.max(1, Math.ceil(totalLines / LINES_PER_PAGE))
-      setPageCount(pages)
+      // Count page-break elements inserted by the Pagination extension
+      // If no page breaks, count as 1 page. Otherwise, pages = breaks + 1
+      const editorElement = document.querySelector('.ProseMirror')
+      if (editorElement) {
+        const pageBreaks = editorElement.querySelectorAll('.page-break').length
+        setPageCount(pageBreaks + 1)
+      } else {
+        // Fallback: estimate based on text length
+        const text = editor.getText()
+        const CHARS_PER_LINE = 65
+        const LINES_PER_PAGE = 42
+        const textLines = Math.ceil(text.length / CHARS_PER_LINE)
+        const pages = Math.max(1, Math.ceil(textLines / LINES_PER_PAGE))
+        setPageCount(pages)
+      }
     }
 
-    // Calculate on content changes
+    // Calculate on content changes with slight delay for render
+    const debouncedCalculate = () => {
+      setTimeout(calculatePages, 100) // Slightly longer delay for pagination extension to render
+    }
+
     calculatePages()
 
     // Listen for editor updates
-    editor.on('update', calculatePages)
+    editor.on('update', debouncedCalculate)
 
     return () => {
-      editor.off('update', calculatePages)
+      editor.off('update', debouncedCalculate)
     }
   }, [editor])
 
   const loadSample = () => {
-    // Load raw markdown so user can see before/after with Convert MD
-    editor?.commands.setContent(`<pre>${sampleResume}</pre>`)
+    // Auto-convert - one click to formatted result
+    const html = markdownToHtml(sampleResume)
+    editor?.commands.setContent(html)
   }
 
   const convertMarkdown = () => {
     if (!editor) return
+
+    // If we have pending markdown (from sample or paste), use it directly
+    if (pendingMarkdown) {
+      const html = markdownToHtml(pendingMarkdown)
+      editor.commands.setContent(html)
+      setPendingMarkdown(null)
+      return
+    }
+
+    // Otherwise try to reconstruct from editor HTML
+    const html = editor.getHTML()
     const text = editor.getText()
     if (text.includes('#')) {
-      const html = markdownToHtml(text)
-      editor.commands.setContent(html)
+      // Reconstruct markdown from HTML paragraphs
+      const textWithBreaks = html
+        .replace(/<p>/g, '')
+        .replace(/<\/p>/g, '\n\n')
+        .replace(/<br\s*\/?>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .trim()
+      const converted = markdownToHtml(textWithBreaks)
+      editor.commands.setContent(converted)
     }
   }
 
   const clearContent = () => {
     editor?.commands.clearContent()
+    setPendingMarkdown(null)
     // Clear localStorage as well
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEYS.EDITOR_CONTENT)
@@ -749,6 +809,10 @@ export default function Editor() {
     const SPACE_AFTER_PARA = 160 // 8pt - space after paragraphs
     const SPACE_AFTER_BULLET = 80 // 4pt - tighter for bullet lists
 
+    // Colors for DOCX (strip # prefix)
+    const HEADING_COLOR = currentTheme.headingColor.replace('#', '')
+    const BODY_COLOR = currentTheme.color.replace('#', '')
+
     const processNode = (node: any) => {
       if (node.type === 'heading') {
         const level = node.attrs?.level || 1
@@ -760,8 +824,17 @@ export default function Editor() {
             size: level === 1 ? FONT_SIZE_H1 : level === 2 ? FONT_SIZE_H2 : FONT_SIZE_H3,
             bold: false, // Match TipTap - headings use size/color, not bold
             characterSpacing: CHAR_SPACING,
+            color: HEADING_COLOR,
           }))
         })
+        // Add decorative border under H2 if theme has decorative enabled
+        const h2Border = (level === 2 && currentTheme.decorative) ? {
+          bottom: {
+            style: BorderStyle.SINGLE,
+            size: 6, // 0.5pt
+            color: HEADING_COLOR,
+          },
+        } : undefined
         children.push(
           new Paragraph({
             children: runs,
@@ -771,6 +844,7 @@ export default function Editor() {
               after: level === 1 ? SPACE_AFTER_H1 : level === 2 ? SPACE_AFTER_H2 : SPACE_AFTER_H3,
               line: LINE_SPACING,
             },
+            border: h2Border,
           })
         )
       } else if (node.type === 'paragraph') {
@@ -785,6 +859,7 @@ export default function Editor() {
             bold: isBold,
             italics: isItalic,
             characterSpacing: CHAR_SPACING,
+            color: BODY_COLOR,
           }))
         })
         children.push(new Paragraph({
@@ -807,6 +882,7 @@ export default function Editor() {
               bold: isBold,
               italics: isItalic,
               characterSpacing: CHAR_SPACING,
+              color: BODY_COLOR,
             }))
           })
           children.push(new Paragraph({
@@ -1107,6 +1183,10 @@ export default function Editor() {
               </Button>
               <Button variant="outline" size="sm" className="h-7 text-xs justify-start" onClick={() => navigator.clipboard.readText().then(text => {
                 if (text) {
+                  // If it looks like markdown, store for Convert MD button
+                  if (text.includes('#') && text.includes('\n')) {
+                    setPendingMarkdown(text)
+                  }
                   editor.commands.setContent(text)
                 }
               }).catch(() => {
@@ -1187,11 +1267,26 @@ export default function Editor() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(themes).map(([key, t]) => (
-                  <SelectItem key={key} value={key}>
-                    {t.name}
-                  </SelectItem>
-                ))}
+                <SelectGroup>
+                  <SelectLabel>Standard</SelectLabel>
+                  {Object.entries(themes)
+                    .filter(([, t]) => t.group === 'standard')
+                    .map(([key, t]) => (
+                      <SelectItem key={key} value={key}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>ATS-Friendly</SelectLabel>
+                  {Object.entries(themes)
+                    .filter(([, t]) => t.group === 'ats')
+                    .map(([key, t]) => (
+                      <SelectItem key={key} value={key}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -1351,8 +1446,32 @@ export default function Editor() {
             </div>
           )}
 
-          {/* Word count, page count, and save status */}
+          {/* Zoom controls, word count, page count, and save status */}
           <div className="ml-auto flex items-center gap-3 text-xs text-gray-400">
+            {/* Zoom controls */}
+            <div className="flex items-center gap-1 border-r pr-3 mr-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setZoom(prev => prev === 100 ? 75 : prev === 75 ? 50 : 50)}
+                disabled={zoom === 50}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                title="Zoom out"
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </Button>
+              <span className="w-8 text-center font-medium">{zoom}%</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setZoom(prev => prev === 50 ? 75 : prev === 75 ? 100 : 100)}
+                disabled={zoom === 100}
+                className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                title="Zoom in"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             {saveStatus === 'saving' && (
               <span className="flex items-center gap-1 text-yellow-600">
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -1432,61 +1551,93 @@ export default function Editor() {
             text-decoration: underline;
             transition: all 0.3s ease-in-out;
           }
+          /* Page break styling from tiptap-pagination-breaks */
+          .page-break {
+            height: 24px;
+            width: 100%;
+            border-top: 2px dashed #cbd5e1;
+            margin: 16px 0;
+            position: relative;
+          }
+          .page-break::after {
+            content: 'Page break';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 0 8px;
+            font-size: 10px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
           @media print {
             .resume-content, .resume-content * {
               transition: none !important;
             }
-            .page-indicator {
+            /* Hide all pagination visuals in print */
+            .page-indicator,
+            .page-break,
+            .page-break::before,
+            .page-break::after,
+            [class*="page-break"],
+            [class*="pagination"] {
               display: none !important;
+              visibility: hidden !important;
+              height: 0 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              border: none !important;
+            }
+          }
+          /* Force proper page margins for PDF export - Chrome's print dialog controls are unreliable */
+          @page {
+            size: letter;
+            margin: 1in;
+          }
+          @media print {
+            /* Remove content padding since @page handles margins */
+            .resume-content {
+              padding: 0 !important;
             }
           }
         `}</style>
 
-        {/* Page canvas with character-based width */}
-        <div className="relative mx-auto" style={{ width: '8.5in' }}>
-          {/* Page break indicators */}
-          {pageCount > 1 && Array.from({ length: pageCount - 1 }).map((_, i) => (
-            <div
-              key={i}
-              className="page-indicator absolute left-0 right-0 flex items-center justify-center"
-              style={{
-                top: `calc(${(i + 1) * 11}in + ${i * 24}px)`,
-                height: '24px',
-                background: '#d1d5db',
-                zIndex: 10,
-              }}
-            >
-              <span className="text-xs text-gray-600 font-medium px-2 py-0.5 bg-gray-200 rounded">
-                Page {i + 2}
-              </span>
+        {/* Single paper-like container - Pagination extension handles page breaks */}
+        <div
+          className="bg-white shadow-2xl relative mx-auto origin-top"
+          style={{
+            width: '8.5in',
+            minHeight: '11in',
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05)',
+            transform: `scale(${zoom / 100})`,
+            transformOrigin: 'top center',
+          }}
+        >
+          {/* Page count indicator */}
+          {pageCount > 1 && (
+            <div className="absolute top-2 right-3 text-xs text-gray-400 z-10">
+              {pageCount} pages
             </div>
-          ))}
-
-          {/* The actual page canvas - 8.5x11 with 0.75in margins */}
+          )}
+          {/* Content area with margins */}
           <div
-            className="bg-white shadow-2xl"
+            ref={printRef}
+            className="resume-content"
             style={{
-              width: '8.5in',
-              minHeight: `calc(${pageCount} * 11in + ${Math.max(0, pageCount - 1) * 24}px)`,
-              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.05)',
+              padding: '1in',
+              fontFamily: currentTheme.fontFamily,
+              fontSize: currentTheme.fontSize,
+              lineHeight: currentTheme.lineHeight,
+              color: currentTheme.color,
+              ['--heading-font' as any]: currentTheme.headingFont,
+              ['--heading-color' as any]: currentTheme.headingColor,
+              ['--export-font' as any]: currentTheme.exportFont,
+              ['--h2-border' as any]: currentTheme.decorative ? `1px solid ${currentTheme.headingColor}` : 'none',
             }}
           >
-            <div
-              ref={printRef}
-              className="resume-content p-[1in]"
-              style={{
-                fontFamily: currentTheme.fontFamily,
-                fontSize: currentTheme.fontSize,
-                lineHeight: currentTheme.lineHeight,
-                color: currentTheme.color,
-                ['--heading-font' as any]: currentTheme.headingFont,
-                ['--heading-color' as any]: currentTheme.headingColor,
-                ['--export-font' as any]: currentTheme.exportFont,
-                ['--h2-border' as any]: currentTheme.decorative ? `1px solid ${currentTheme.headingColor}` : 'none',
-              }}
-            >
-              <EditorContent editor={editor} />
-            </div>
+            <EditorContent editor={editor} />
           </div>
         </div>
       </div>
