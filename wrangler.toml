@@ -1,16 +1,26 @@
 name = "prettify-ai"
 compatibility_date = "2024-12-01"
+pages_build_output_dir = "dist"
 
-# KV namespace for sessions (required by Astro Cloudflare adapter)
+# Workers AI binding - 10K neurons/day free tier
+# Access in code via: locals.runtime.env.AI
+[ai]
+binding = "AI"
+
+# KV namespace for sessions (optional)
 # Create with: npx wrangler kv:namespace create SESSION
-# Then update the id below
 # [[kv_namespaces]]
 # binding = "SESSION"
 # id = "your-kv-namespace-id"
 
 [vars]
 # Environment variables (non-secret)
-# GROQ_API_KEY should be set in Cloudflare dashboard as a secret
+# API keys should be set in Cloudflare dashboard as secrets:
+# - GROQ_API_KEY (fallback LLM)
+# - FIRECRAWL_API_KEY (job scraping)
+
+# AI strategy: free-first uses Cloudflare AI, falls back to Groq/Gemini
+AI_STRATEGY = "free-first"
 
 # Production environment
 [env.production]
