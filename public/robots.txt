@@ -1,0 +1,7 @@
+# robots.txt for prettify-ai.com
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://prettify-ai.com/sitemap.xml

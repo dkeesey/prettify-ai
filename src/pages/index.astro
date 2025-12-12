@@ -31,13 +31,12 @@ if (mode === 'coach-only') {
       <section class="bg-white border-b">
         <div class="container mx-auto px-4 py-20 max-w-4xl">
           <div class="text-center">
-            <p class="text-sm font-medium text-primary mb-4 uppercase tracking-wide">Free Conversion Tool</p>
+            <p class="text-sm font-medium text-primary mb-4 uppercase tracking-wide">Free Markdown Conversion Tool</p>
             <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-6">
-              LLM output looks like this:<br/>
-              <code class="text-2xl md:text-3xl bg-gray-100 px-3 py-1 rounded font-mono text-gray-600">## Experience</code>
+              Prettify AI - Convert Markdown to Professional PDF & DOCX
             </h1>
             <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Turn it into professionally styled <strong>PDF</strong> and <strong>DOCX</strong> documents in seconds.
+              Free online tool to convert LLM markdown output from ChatGPT, Claude, and any AI assistant into professionally styled <strong>PDF</strong> and <strong>DOCX</strong> documents in seconds.
             </p>
             <a href="/editor" class="inline-flex items-center justify-center rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-10 text-lg">
               Start Converting
@@ -49,14 +48,17 @@ if (mode === 'coach-only') {
       <!-- The Flow -->
       <section class="py-16">
         <div class="container mx-auto px-4 max-w-5xl">
-          <h2 class="text-2xl font-bold text-center mb-12">How It Works</h2>
+          <h2 class="text-2xl font-bold text-center mb-4">How Prettify AI Works</h2>
+          <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            Convert your AI-generated markdown to professional documents in 4 simple steps
+          </p>
 
           <div class="grid md:grid-cols-4 gap-6">
             <!-- Step 1: Paste -->
             <div class="text-center">
               <div class="w-12 h-12 rounded-full bg-gray-200 text-gray-600 font-bold flex items-center justify-center mx-auto mb-3">1</div>
-              <h3 class="font-semibold mb-1">Paste</h3>
-              <p class="text-sm text-gray-500">Markdown from ChatGPT, Claude, or bookmarklet</p>
+              <h3 class="font-semibold mb-1">Paste Markdown</h3>
+              <p class="text-sm text-gray-500">From ChatGPT, Claude, or any LLM</p>
             </div>
 
             <!-- Step 2: Convert -->
@@ -143,10 +145,10 @@ if (mode === 'coach-only') {
       <section class="py-16">
         <div class="container mx-auto px-4 max-w-3xl text-center">
           <p class="text-sm font-medium text-gray-500 mb-4">COMMON USE CASE</p>
-          <h2 class="text-2xl font-bold mb-6">AI-Generated Resumes</h2>
+          <h2 class="text-2xl font-bold mb-6">AI-Generated Resumes with Prettify AI</h2>
           <p class="text-gray-600 mb-8">
             You asked ChatGPT or Claude to write your resume. It gave you great content in markdown format.
-            Now you need it in a format you can actually submit. That's what this tool does.
+            Now you need it in a format you can actually submit. Prettify AI converts your AI-generated markdown into professional documents instantly - no signup required.
           </p>
           <a href="/editor" class="inline-flex items-center justify-center rounded-md font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-12 px-8">
             Try It Now
@@ -172,9 +174,22 @@ if (mode === 'coach-only') {
     </main>
 
     <!-- Footer -->
-    <footer class="border-t bg-white py-6">
-      <div class="container mx-auto px-4 text-center text-sm text-gray-500">
-        <p>Free. No signup. No payment. <a href="https://github.com/dkeesey/prettify-ai" class="underline hover:text-primary">Open source</a>.</p>
+    <footer class="border-t bg-white py-8">
+      <div class="container mx-auto px-4 text-center">
+        <div class="mb-4">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Prettify AI</h3>
+          <p class="text-sm text-gray-600 mb-4 max-w-2xl mx-auto">
+            Free markdown to PDF and DOCX converter. Transform AI-generated content from ChatGPT, Claude, and other LLMs into professional documents.
+          </p>
+        </div>
+        <div class="flex justify-center gap-6 mb-4 text-sm">
+          <a href="/editor" class="text-gray-600 hover:text-primary underline">Markdown Editor</a>
+          <a href="/coach" class="text-gray-600 hover:text-primary underline">Resume Coach</a>
+          <a href="https://github.com/dkeesey/prettify-ai" class="text-gray-600 hover:text-primary underline" target="_blank" rel="noopener noreferrer">Open Source</a>
+        </div>
+        <p class="text-xs text-gray-500">
+          100% Free • No Signup Required • Privacy-Focused
+        </p>
       </div>
     </footer>
   </div>
