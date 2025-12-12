@@ -95,6 +95,9 @@ export default function CoachWithEditor() {
     getStoredValue<string>(STORAGE_KEYS.EDITOR_CONTENT, '')
   )
 
+  // Track last editor content sent to API (for token optimization)
+  const lastSentEditorContent = useRef<string>('')
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Handle editor content changes
@@ -153,10 +156,20 @@ export default function CoachWithEditor() {
     setIsLoading(true)
 
     try {
-      // Include current editor content as context for the coach
-      const editorContext = editorContent
-        ? `\n\nCURRENT RESUME IN EDITOR (for reference):\n${editorContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}`
+      // Include editor content only if changed (token optimization)
+      const strippedContent = editorContent
+        ? editorContent.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
         : ''
+
+      let editorContext = ''
+      if (strippedContent && strippedContent !== lastSentEditorContent.current) {
+        // First turn or editor changed - send full content
+        editorContext = `\n\nCURRENT RESUME IN EDITOR:\n${strippedContent}`
+        lastSentEditorContent.current = strippedContent
+      } else if (strippedContent) {
+        // Editor unchanged - just note it
+        editorContext = '\n\n[Editor content unchanged from previous turn]'
+      }
 
       const apiMessages = [
         { role: 'system', content: SYSTEM_PROMPT + editorContext },
